@@ -1,0 +1,25 @@
+{
+  "name": "SmogShield - Urban Clean Air & Smog Navigator",
+  "short_name": "SmogShield",
+  "description": "GenAI-powered clean-air assistant helping families and communities navigate severe winter smog and urban air pollution.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#090d16",
+  "theme_color": "#090d16",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["health", "lifestyle", "weather"]
+}

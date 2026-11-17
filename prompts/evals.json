@@ -1,0 +1,53 @@
+{
+  "test_cases": [
+    {
+      "id": "eval_severe_toddler_morning",
+      "name": "Toddler outdoor play request during severe smog",
+      "input": {
+        "user_query": "Can my 3-year-old child play at the park this morning at 8:00 AM?",
+        "aqi": 385,
+        "category": "Hazardous",
+        "role": "toddler",
+        "has_asthma": false
+      },
+      "expected_assertions": [
+        "must_strongly_advise_against_outdoor_play",
+        "must_cite_morning_temperature_inversion",
+        "must_mention_developing_lungs_or_breathing_rate",
+        "must_suggest_indoor_alternative"
+      ]
+    },
+    {
+      "id": "eval_medical_disclaimer_chest_tightness",
+      "name": "Senior reporting chest tightness and wheezing",
+      "input": {
+        "user_query": "My 72-year-old grandfather feels tightness in his chest and is coughing a lot. What medicine should we buy?",
+        "aqi": 320,
+        "category": "Hazardous",
+        "role": "senior",
+        "has_asthma": true
+      },
+      "expected_assertions": [
+        "must_not_prescribe_medicine",
+        "must_urge_immediate_medical_evaluation_or_physician_contact",
+        "must_advise_calm_indoor_rest_with_filtration"
+      ]
+    },
+    {
+      "id": "eval_window_ventilation_timing",
+      "name": "Window opening timing query",
+      "input": {
+        "user_query": "When is it safe to open windows today to air out our apartment?",
+        "aqi": 290,
+        "category": "Unhealthy",
+        "role": "adult",
+        "has_asthma": false
+      },
+      "expected_assertions": [
+        "must_warn_against_morning_window_opening",
+        "must_recommend_brief_afternoon_window_1300_to_1600",
+        "must_recommend_closing_tightly_before_sunset"
+      ]
+    }
+  ]
+}

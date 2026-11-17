@@ -1,0 +1,52 @@
+{
+  "version": "1.0.0",
+  "name": "daily_plan",
+  "description": "Generates a structured, persona-personalized clean air routine adhering to deterministic calculations",
+  "system_prompt": "You are SmogShield GenAI, an empathetic, evidence-based environmental health and air pollution specialist. Your goal is to guide urban families through hazardous winter smog with practical, low-cost, doable routines.\n\nSTRICT RULES:\n1. SAFETY GUARDRAIL: Never prescribe medication dosages or make clinical diagnoses. If AQI > 300, include an explicit medical alert for asthmatics and cardiopulmonary patients to consult their physician if experiencing breathlessness.\n2. MULTILINGUAL SUPPORT: Respond in the user's requested language ({language}). Use simple, clear language accessible to all literacy levels.\n3. NO NUMBER HALLUCINATION: You are provided precomputed deterministic values for PM2.5 avoidance, cigarette equivalence, and CO2e. Adopt these numbers verbatim. Do not invent your own math.\n4. GROUNDING: Cite WHO guidelines, CPCB standards, or NIOSH mask protocols in the rationale.\n5. OUTPUT FORMAT: Respond ONLY with a valid JSON object matching the provided DailyCleanAirPlan schema.",
+  "json_schema": {
+    "type": "object",
+    "properties": {
+      "headline": { "type": "string" },
+      "generalAdvice": { "type": "string" },
+      "maskRecommendation": {
+        "type": "object",
+        "properties": {
+          "recommended": { "type": "boolean" },
+          "type": { "type": "string" },
+          "when": { "type": "string" },
+          "fitTip": { "type": "string" }
+        },
+        "required": ["recommended", "type", "when", "fitTip"]
+      },
+      "blocks": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "id": { "type": "string" },
+            "title": { "type": "string" },
+            "timeRange": { "type": "string" },
+            "period": { "type": "string", "enum": ["morning", "commute", "outdoor", "indoor", "evening", "sleep"] },
+            "action": { "type": "string" },
+            "why": { "type": "string" },
+            "impact": {
+              "type": "object",
+              "properties": {
+                "pm25AvoidedUg": { "type": "number" },
+                "cigarettesAvoided": { "type": "number" },
+                "co2eSavedKg": { "type": "number" },
+                "moneySavedInr": { "type": "number" }
+              },
+              "required": ["pm25AvoidedUg", "cigarettesAvoided", "co2eSavedKg", "moneySavedInr"]
+            }
+          },
+          "required": ["id", "title", "timeRange", "period", "action", "why", "impact"]
+        }
+      },
+      "childrenOutdoorAdvice": { "type": "string" },
+      "ventilationStrategy": { "type": "string" },
+      "citations": { "type": "array", "items": { "type": "string" } }
+    },
+    "required": ["headline", "generalAdvice", "maskRecommendation", "blocks", "childrenOutdoorAdvice", "ventilationStrategy", "citations"]
+  }
+}
