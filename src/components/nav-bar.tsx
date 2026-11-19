@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { 
@@ -13,14 +13,22 @@ import {
   Users, 
   UserCircle2,
   RefreshCw,
-  Globe2
+  Globe2,
+  KeyRound,
+  X,
+  Check,
+  ExternalLink,
+  Sparkles
 } from "lucide-react";
 import { useApp } from "@/context/app-context";
 import { getTranslation } from "@/lib/i18n";
 
 export function NavBar() {
   const pathname = usePathname();
-  const { profile, aqiData, refreshAQI, language, setLanguage } = useApp();
+  const { profile, aqiData, refreshAQI, language, setLanguage, geminiApiKey, setGeminiApiKey } = useApp();
+  const [showKeyModal, setShowKeyModal] = useState(false);
+  const [tempKey, setTempKey] = useState(geminiApiKey);
+  const [keySavedMessage, setKeySavedMessage] = useState(false);
   const t = getTranslation(language);
 
   const navItems = [
@@ -84,6 +92,23 @@ export function NavBar() {
               <span>{language === "en" ? "हिन्दी" : "EN"}</span>
             </button>
 
+            {/* Gemini API Key Button */}
+            <button
+              onClick={() => {
+                setTempKey(geminiApiKey);
+                setShowKeyModal(true);
+              }}
+              className={`p-1.5 rounded-md border text-xs transition flex items-center gap-1 ${
+                geminiApiKey
+                  ? "bg-emerald-950/60 border-emerald-500/50 text-emerald-300"
+                  : "bg-slate-900/60 border-slate-700 text-slate-400 hover:text-white"
+              }`}
+              title="Configure Gemini API Key"
+            >
+              <KeyRound className="w-3.5 h-3.5 text-cyan-400" />
+              {geminiApiKey && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />}
+            </button>
+
             {/* Refresh AQI */}
             <button
               onClick={() => refreshAQI()}
@@ -95,6 +120,119 @@ export function NavBar() {
           </div>
         </div>
       </header>
+
+      {/* Gemini API Key Modal */}
+      {showKeyModal && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-surface-card border border-surface-border rounded-2xl p-5 max-w-md w-full shadow-2xl relative space-y-4">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-base font-bold text-white flex items-center gap-2">
+                  <KeyRound className="w-5 h-5 text-cyan-400" />
+                  Google Gemini API Key
+                </h3>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Connect live Gemini 1.5 / 2.0 Flash models for real-time generative plans and chat.
+                </p>
+              </div>
+              <button
+                onClick={() => setShowKeyModal(false)}
+                className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 text-xs space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-slate-400">Current Status:</span>
+                {geminiApiKey ? (
+                  <span className="text-emerald-400 font-bold flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                    Live Gemini Key Connected
+                  </span>
+                ) : (
+                  <span className="text-cyan-300 font-semibold flex items-center gap-1.5">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    Demo Mode Active (Zero Keys Required)
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-slate-400">
+                SmogShield works fully in Demo Mode without any API keys. If you provide a Gemini API Key, it will query Google Gemini models live!
+              </p>
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-slate-300 block mb-1">
+                Paste your Gemini API Key:
+              </label>
+              <input
+                type="password"
+                placeholder="AIzaSy..."
+                value={tempKey}
+                onChange={(e) => setTempKey(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white placeholder-slate-500 font-mono focus:outline-none focus:border-cyan-400"
+              />
+              <div className="flex justify-between items-center mt-1.5 text-[11px]">
+                <a
+                  href="https://aistudio.google.com/app/apikey"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-cyan-400 hover:underline flex items-center gap-1"
+                >
+                  Get free key at Google AI Studio <ExternalLink className="w-3 h-3" />
+                </a>
+                {geminiApiKey && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setGeminiApiKey("");
+                      setTempKey("");
+                      setKeySavedMessage(true);
+                      setTimeout(() => setKeySavedMessage(false), 2000);
+                    }}
+                    className="text-rose-400 hover:underline"
+                  >
+                    Clear Key
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-slate-800">
+              {keySavedMessage ? (
+                <span className="text-xs text-emerald-400 font-semibold flex items-center gap-1">
+                  <Check className="w-4 h-4" /> Saved!
+                </span>
+              ) : <span />}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowKeyModal(false)}
+                  className="px-3 py-1.5 rounded-xl text-xs text-slate-400 hover:text-white"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setGeminiApiKey(tempKey.trim());
+                    setKeySavedMessage(true);
+                    setTimeout(() => {
+                      setKeySavedMessage(false);
+                      setShowKeyModal(false);
+                    }, 1200);
+                  }}
+                  className="px-4 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs transition"
+                >
+                  Save & Apply
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bottom Navigation for Mobile / Tablet */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#0c121e]/95 backdrop-blur-lg border-t border-surface-border safe-bottom">

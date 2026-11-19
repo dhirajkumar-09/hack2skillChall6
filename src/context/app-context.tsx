@@ -22,6 +22,8 @@ interface AppContextType {
   streakDays: number;
   indoorSensorReading: number | null;
   setIndoorSensorReading: (val: number | null) => void;
+  geminiApiKey: string;
+  setGeminiApiKey: (key: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -37,10 +39,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [totalSavedMoneyInr, setTotalSavedMoneyInr] = useState<number>(45);
   const [streakDays, setStreakDays] = useState<number>(4);
   const [indoorSensorReading, setIndoorSensorReading] = useState<number | null>(null);
+  const [geminiApiKey, setGeminiApiKeyState] = useState<string>("");
 
   // Initialize from LocalStorage or live fetch
   useEffect(() => {
     try {
+      const savedKey = localStorage.getItem("smogshield_gemini_key");
+      if (savedKey) {
+        setGeminiApiKeyState(savedKey);
+      }
+
       const savedProfile = localStorage.getItem("smogshield_profile");
       if (savedProfile) {
         const parsed = JSON.parse(savedProfile);
@@ -94,6 +102,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const setGeminiApiKey = (key: string) => {
+    setGeminiApiKeyState(key);
+    try {
+      if (key) {
+        localStorage.setItem("smogshield_gemini_key", key);
+      } else {
+        localStorage.removeItem("smogshield_gemini_key");
+      }
+    } catch {}
+  };
+
   const setLanguage = (lang: AppLanguage) => {
     setLanguageState(lang);
     setProfileState(prev => ({ ...prev, language: lang }));
@@ -140,7 +159,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         totalSavedMoneyInr,
         streakDays,
         indoorSensorReading,
-        setIndoorSensorReading
+        setIndoorSensorReading,
+        geminiApiKey,
+        setGeminiApiKey
       }}
     >
       {children}

@@ -9,8 +9,9 @@ export async function POST(request: NextRequest) {
     const profile = body.profile || DEFAULT_USER_PROFILE;
     const aqiData = body.aqiData || await fetchLiveAQI(profile.latitude, profile.longitude);
     const language = body.language || profile.language || "en";
+    const apiKey = body.apiKey;
 
-    const plan = await generateDailyPlan(profile, aqiData, language);
+    const plan = await generateDailyPlan(profile, aqiData, language, apiKey);
     return NextResponse.json(plan);
   } catch (err: any) {
     return NextResponse.json(

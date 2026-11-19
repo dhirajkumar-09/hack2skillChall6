@@ -19,7 +19,7 @@ import {
 import { getTranslation } from "@/lib/i18n";
 
 export default function PlanPage() {
-  const { profile, aqiData, language, completedActions, toggleActionCompleted } = useApp();
+  const { profile, aqiData, language, completedActions, toggleActionCompleted, geminiApiKey } = useApp();
   const [plan, setPlan] = useState<DailyCleanAirPlan | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const t = getTranslation(language);
@@ -31,7 +31,7 @@ export default function PlanPage() {
       const res = await fetch("/api/plan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ profile, aqiData, language })
+        body: JSON.stringify({ profile, aqiData, language, apiKey: geminiApiKey })
       });
       if (res.ok) {
         const data = await res.json();
@@ -46,7 +46,7 @@ export default function PlanPage() {
 
   useEffect(() => {
     fetchPlan();
-  }, [profile.id, aqiData.aqi, language]);
+  }, [profile.id, aqiData.aqi, language, geminiApiKey]);
 
   const getPeriodBadgeColor = (period: string) => {
     switch (period) {

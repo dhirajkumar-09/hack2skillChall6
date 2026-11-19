@@ -17,7 +17,7 @@ import {
 import { getTranslation } from "@/lib/i18n";
 
 export default function ChatPage() {
-  const { profile, aqiData, language } = useApp();
+  const { profile, aqiData, language, geminiApiKey } = useApp();
   const isHi = language === "hi";
   const t = getTranslation(language);
 
@@ -76,7 +76,8 @@ export default function ChatPage() {
           history: messages,
           profile,
           aqiData,
-          language
+          language,
+          apiKey: geminiApiKey
         })
       });
 

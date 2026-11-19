@@ -12,9 +12,10 @@ export interface LLMProviderConfig {
 export async function generateDailyPlan(
   profile: UserProfile,
   aqiData: AQIData,
-  language: 'en' | 'hi' = 'en'
+  language: 'en' | 'hi' = 'en',
+  customApiKey?: string
 ): Promise<DailyCleanAirPlan> {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+  const apiKey = customApiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
 
   if (apiKey) {
     try {
@@ -37,9 +38,10 @@ export async function generateChatResponse(
   history: ChatMessage[],
   profile: UserProfile,
   aqiData: AQIData,
-  language: 'en' | 'hi' = 'en'
+  language: 'en' | 'hi' = 'en',
+  customApiKey?: string
 ): Promise<{ text: string; citations: string[]; suggestedFollowUps: string[] }> {
-  const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+  const apiKey = customApiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
   const retrievedChunks = queryKnowledgeBase(userQuery, 3);
   const citations = retrievedChunks.map(c => c.source);
 
@@ -347,25 +349,53 @@ Profile: ${JSON.stringify(profile)}
 AQI Data: ${JSON.stringify(aqiData)}
 Language requested: ${language}
 
-Follow the schema strictly. Return only valid JSON.`;
+Strict requirements:
+- Return ONLY valid JSON adhering to this structure:
+{
+  "id": "plan_123",
+  "date": "string",
+  "headline": "string",
+  "generalAdvice": "string",
+  "maskRecommendation": { "recommended": boolean, "type": "string", "when": "string", "fitTip": "string" },
+  "blocks": [
+    { "id": "b1", "title": "string", "timeRange": "string", "period": "morning|commute|outdoor|indoor|evening|sleep", "action": "string", "why": "string", "impact": { "pm25AvoidedUg": number, "cigarettesAvoided": number, "co2eSavedKg": number, "moneySavedInr": number } }
+  ],
+  "childrenOutdoorAdvice": "string",
+  "ventilationStrategy": "string",
+  "citations": ["string"]
+}`;
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        responseMimeType: "application/json"
+  const models = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'];
+  for (const model of models) {
+    try {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }],
+          generationConfig: {
+            responseMimeType: "application/json"
+          }
+        })
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (text) {
+          const parsed = JSON.parse(text);
+          if (parsed && parsed.headline && parsed.blocks) {
+            return parsed as DailyCleanAirPlan;
+          }
+        }
       }
-    })
-  });
+    } catch {
+      // try next model
+    }
+  }
 
-  if (!res.ok) return null;
-  const json = await res.json();
-  const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) return null;
-  return JSON.parse(text) as DailyCleanAirPlan;
+  return null;
 }
 
 async function callGeminiChat(
@@ -384,40 +414,50 @@ Language: ${language}`;
 
   const prompt = `${context}\n\nUser Question: ${query}\n\nProvide an empathetic, scientifically grounded reply in 2-3 short paragraphs with citations. Then list 3 suggested follow-up questions at the end under [FOLLOW_UPS] formatted as a JSON string array.`;
 
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }]
-    })
-  });
-
-  if (!res.ok) return null;
-  const json = await res.json();
-  const rawText = json.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!rawText) return null;
-
-  let text = rawText;
-  let suggestedFollowUps = [
-    "What is the cheapest DIY purifier I can make?",
-    "When is the safest time to ventilate today?",
-    "Does wearing a surgical mask protect against smog?"
-  ];
-
-  if (rawText.includes("[FOLLOW_UPS]")) {
-    const parts = rawText.split("[FOLLOW_UPS]");
-    text = parts[0].trim();
+  const models = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'];
+  for (const model of models) {
     try {
-      suggestedFollowUps = JSON.parse(parts[1].trim());
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: prompt }] }]
+        })
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        const rawText = json.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (rawText) {
+          let text = rawText;
+          let suggestedFollowUps = [
+            "What is the cheapest DIY purifier I can make?",
+            "When is the safest time to ventilate today?",
+            "Does wearing a surgical mask protect against smog?"
+          ];
+
+          if (rawText.includes("[FOLLOW_UPS]")) {
+            const parts = rawText.split("[FOLLOW_UPS]");
+            text = parts[0].trim();
+            try {
+              suggestedFollowUps = JSON.parse(parts[1].trim());
+            } catch {
+              // fallback
+            }
+          }
+
+          return {
+            text,
+            citations: retrieved.map(r => r.source),
+            suggestedFollowUps
+          };
+        }
+      }
     } catch {
-      // fallback
+      // try next model
     }
   }
 
-  return {
-    text,
-    citations: retrieved.map(r => r.source),
-    suggestedFollowUps
-  };
+  return null;
 }

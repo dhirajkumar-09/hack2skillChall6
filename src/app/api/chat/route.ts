@@ -11,12 +11,13 @@ export async function POST(request: NextRequest) {
     const profile = body.profile || DEFAULT_USER_PROFILE;
     const aqiData = body.aqiData || FALLBACK_AQI_DATA;
     const language = body.language || profile.language || "en";
+    const apiKey = body.apiKey;
 
     if (!query.trim()) {
       return NextResponse.json({ error: "Query is required" }, { status: 400 });
     }
 
-    const response = await generateChatResponse(query, history, profile, aqiData, language);
+    const response = await generateChatResponse(query, history, profile, aqiData, language, apiKey);
     return NextResponse.json(response);
   } catch (err: any) {
     return NextResponse.json(
