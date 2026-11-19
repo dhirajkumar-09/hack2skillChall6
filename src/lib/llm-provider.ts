@@ -365,7 +365,7 @@ Strict requirements:
   "citations": ["string"]
 }`;
 
-  const models = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'];
+  const models = ['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-flash-lite-latest', 'gemini-3.8-flash', 'gemma-4-26b-a4b-it'];
   for (const model of models) {
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
@@ -414,7 +414,7 @@ Language: ${language}`;
 
   const prompt = `${context}\n\nUser Question: ${query}\n\nProvide an empathetic, scientifically grounded reply in 2-3 short paragraphs with citations. Then list 3 suggested follow-up questions at the end under [FOLLOW_UPS] formatted as a JSON string array.`;
 
-  const models = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'];
+  const models = ['gemini-3.5-flash-lite', 'gemini-3.1-flash-lite', 'gemini-flash-lite-latest', 'gemini-3.8-flash', 'gemma-4-26b-a4b-it'];
   for (const model of models) {
     try {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
