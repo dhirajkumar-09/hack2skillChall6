@@ -18,15 +18,19 @@ import {
   X,
   Check,
   ExternalLink,
-  Sparkles
+  Sparkles,
+  MapPin
 } from "lucide-react";
 import { useApp } from "@/context/app-context";
 import { getTranslation } from "@/lib/i18n";
+
+import { LocationSelector } from "@/components/location-selector";
 
 export function NavBar() {
   const pathname = usePathname();
   const { profile, aqiData, refreshAQI, language, setLanguage, geminiApiKey, setGeminiApiKey } = useApp();
   const [showKeyModal, setShowKeyModal] = useState(false);
+  const [showLocationModal, setShowLocationModal] = useState(false);
   const [tempKey, setTempKey] = useState(geminiApiKey);
   const [keySavedMessage, setKeySavedMessage] = useState(false);
   const t = getTranslation(language);
@@ -58,22 +62,28 @@ export function NavBar() {
       {/* Top Header */}
       <header className="sticky top-0 z-50 bg-[#090d16]/90 backdrop-blur-md border-b border-surface-border px-4 py-2.5 transition-colors">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-500 to-emerald-400 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+          <div className="flex items-center gap-2">
+            <Link href="/" className="w-8 h-8 rounded-lg bg-gradient-to-tr from-cyan-500 to-emerald-400 flex items-center justify-center shadow-lg shadow-cyan-500/20 shrink-0">
               <span className="text-black font-extrabold text-sm tracking-tighter">SS</span>
-            </div>
+            </Link>
             <div>
-              <span className="font-bold text-white text-base tracking-tight flex items-center gap-1.5">
+              <Link href="/" className="font-bold text-white text-base tracking-tight flex items-center gap-1.5">
                 SmogShield
                 <span className="text-[10px] bg-cyan-950 text-cyan-300 border border-cyan-800/60 font-semibold px-1.5 py-0.5 rounded-full">
                   PWA
                 </span>
-              </span>
-              <p className="text-[11px] text-slate-400 line-clamp-1 max-w-[140px] sm:max-w-xs">
-                {profile.locationName.split(",")[0]}
-              </p>
+              </Link>
+              <button
+                type="button"
+                onClick={() => setShowLocationModal(true)}
+                className="text-[11px] text-slate-400 hover:text-cyan-300 transition flex items-center gap-1 text-left line-clamp-1 max-w-[140px] sm:max-w-xs"
+                title="Change Location & Live AQI"
+              >
+                <MapPin className="w-3 h-3 text-cyan-400 shrink-0" />
+                <span className="truncate">{profile.locationName.split("(")[0]}</span>
+              </button>
             </div>
-          </Link>
+          </div>
 
           <div className="flex items-center gap-2">
             {/* Live AQI badge */}
@@ -122,6 +132,10 @@ export function NavBar() {
       </header>
 
       {/* Gemini API Key Modal */}
+      <LocationSelector
+        isOpen={showLocationModal}
+        onClose={() => setShowLocationModal(false)}
+      />
       {showKeyModal && (
         <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-surface-card border border-surface-border rounded-2xl p-5 max-w-md w-full shadow-2xl relative space-y-4">

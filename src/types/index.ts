@@ -42,6 +42,20 @@ export type AQICategory =
   | 'Very Unhealthy' 
   | 'Hazardous';
 
+export interface HourlyForecastItem {
+  hour: string;
+  aqi: number;
+  category: AQICategory;
+  pm25: number;
+  pm10?: number;
+  temperature?: number;
+  humidity?: number;
+  windSpeed?: number;
+  temperatureInversion?: boolean;
+  condition: string;
+  recommendation?: string;
+}
+
 export interface AQIData {
   aqi: number;
   category: AQICategory;
@@ -55,12 +69,7 @@ export interface AQIData {
   humidity: number;
   windSpeed: number;
   temperatureInversion: boolean;
-  forecastHourly: Array<{
-    hour: string;
-    aqi: number;
-    pm25: number;
-    condition: string;
-  }>;
+  forecastHourly: HourlyForecastItem[];
   safeOutdoorWindows: Array<{
     start: string;
     end: string;

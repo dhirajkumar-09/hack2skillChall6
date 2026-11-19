@@ -1,11 +1,12 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { useApp } from "@/context/app-context";
 import { PersonaSwitcher } from "@/components/persona-switcher";
 import { AqiGauge } from "@/components/aqi-gauge";
 import { MemberRiskCard } from "@/components/member-risk-card";
+import { LocationSelector, POPULAR_CITIES } from "@/components/location-selector";
 import { 
   CalendarClock, 
   CheckCircle2, 
@@ -17,13 +18,16 @@ import {
   MessageSquareQuote,
   Flame,
   Cigarette,
-  Leaf
+  Leaf,
+  MapPin,
+  ChevronDown
 } from "lucide-react";
 import { getTranslation } from "@/lib/i18n";
 
 export default function DashboardPage() {
   const { 
     profile, 
+    setProfile,
     aqiData, 
     language, 
     completedActions, 
@@ -34,6 +38,7 @@ export default function DashboardPage() {
     streakDays
   } = useApp();
 
+  const [showLocationModal, setShowLocationModal] = useState(false);
   const t = getTranslation(language);
   const isHi = language === "hi";
 
@@ -81,6 +86,67 @@ export default function DashboardPage() {
     <div className="space-y-6">
       {/* Persona Quick Switcher */}
       <PersonaSwitcher />
+
+      {/* Location Quick Bar & Selector */}
+      <div className="bg-surface-card border border-surface-border rounded-2xl p-3.5 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400 shrink-0">
+            <MapPin className="w-4 h-4" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">
+                {isHi ? "सक्रिय स्टेशन (Station)" : "Monitoring Location"}
+              </span>
+              <span className="text-[9px] bg-slate-800 text-slate-300 font-mono px-1.5 py-0.5 rounded">
+                {profile.latitude}°N, {profile.longitude}°E
+              </span>
+            </div>
+            <h3 className="text-sm font-bold text-white truncate max-w-xs">
+              {profile.locationName}
+            </h3>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+          <button
+            onClick={() => setShowLocationModal(true)}
+            className="px-3 py-1.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs flex items-center gap-1.5 shrink-0 shadow-md shadow-cyan-950 transition"
+          >
+            <MapPin className="w-3.5 h-3.5" />
+            <span>{isHi ? "शहर बदलें" : "Change Location"}</span>
+            <ChevronDown className="w-3 h-3 opacity-80" />
+          </button>
+
+          {/* Quick city pill shortcuts */}
+          {POPULAR_CITIES.slice(0, 4).map((city, idx) => {
+            const isCurrent = Math.abs(city.lat - profile.latitude) < 0.05 && Math.abs(city.lon - profile.longitude) < 0.05;
+            return (
+              <button
+                key={idx}
+                onClick={() => setProfile({
+                  ...profile,
+                  locationName: city.name,
+                  latitude: city.lat,
+                  longitude: city.lon
+                })}
+                className={`px-2.5 py-1.5 rounded-xl text-[11px] font-medium border shrink-0 transition ${
+                  isCurrent
+                    ? "bg-cyan-950/80 border-cyan-400 text-cyan-300 font-bold"
+                    : "bg-slate-900 border-slate-800 hover:border-slate-700 text-slate-400"
+                }`}
+              >
+                {city.name.split(" ")[0]}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <LocationSelector
+        isOpen={showLocationModal}
+        onClose={() => setShowLocationModal(false)}
+      />
 
       {/* Main AQI Gauge Card */}
       <AqiGauge data={aqiData} language={language} />

@@ -1,4 +1,4 @@
-import { AQICategory, AQIData } from "@/types";
+import { AQICategory, AQIData, HourlyForecastItem } from "@/types";
 
 /**
  * Convert PM2.5 (µg/m³) to AQI and Category
@@ -49,16 +49,136 @@ export const FALLBACK_AQI_DATA: AQIData = {
   windSpeed: 3.2,
   temperatureInversion: true,
   forecastHourly: [
-    { hour: "06:00", aqi: 412, pm25: 260, condition: "Severe nocturnal smog trapped by boundary inversion" },
-    { hour: "08:00", aqi: 435, pm25: 280, condition: "Peak traffic emissions & ground cooling" },
-    { hour: "10:00", aqi: 395, pm25: 245, condition: "Sun warming begins breaking shallow boundary layer" },
-    { hour: "12:00", aqi: 310, pm25: 180, condition: "Warming boundary layer; dispersing particles" },
-    { hour: "14:00", aqi: 240, pm25: 140, condition: "Best afternoon window: max vertical mixing" },
-    { hour: "16:00", aqi: 285, pm25: 168, condition: "Evening cooling begins; winds dropping" },
-    { hour: "18:00", aqi: 360, pm25: 220, condition: "Evening rush hour & secondary inversion formation" },
-    { hour: "20:00", aqi: 390, pm25: 248, condition: "Trapped surface emissions" },
-    { hour: "22:00", aqi: 415, pm25: 265, condition: "Dense nocturnal haze layer" },
-    { hour: "00:00", aqi: 425, pm25: 275, condition: "Near zero surface dispersion" }
+    {
+      hour: "06:00",
+      aqi: 412,
+      category: "Hazardous",
+      pm25: 260,
+      pm10: 410,
+      temperature: 13.5,
+      humidity: 86,
+      windSpeed: 1.8,
+      temperatureInversion: true,
+      condition: "Severe nocturnal smog trapped by boundary inversion",
+      recommendation: "Ground inversion at peak. Strictly avoid all morning outdoor exercise and keep windows tightly sealed."
+    },
+    {
+      hour: "08:00",
+      aqi: 435,
+      category: "Hazardous",
+      pm25: 280,
+      pm10: 440,
+      temperature: 15.0,
+      humidity: 82,
+      windSpeed: 2.5,
+      temperatureInversion: true,
+      condition: "Peak traffic emissions & ground cooling",
+      recommendation: "Rush hour traffic surge. Mandatory sealed headband N95 respirator if commuting."
+    },
+    {
+      hour: "10:00",
+      aqi: 395,
+      category: "Very Unhealthy",
+      pm25: 245,
+      pm10: 390,
+      temperature: 18.0,
+      humidity: 72,
+      windSpeed: 3.8,
+      temperatureInversion: true,
+      condition: "Sun warming begins breaking shallow boundary layer",
+      recommendation: "Inversion beginning to disperse. Keep air purifiers running indoors."
+    },
+    {
+      hour: "12:00",
+      aqi: 310,
+      category: "Very Unhealthy",
+      pm25: 180,
+      pm10: 290,
+      temperature: 21.5,
+      humidity: 58,
+      windSpeed: 5.2,
+      temperatureInversion: false,
+      condition: "Warming boundary layer; dispersing particles",
+      recommendation: "Vertical air mixing accelerating. Particulate dropping towards daily minimum."
+    },
+    {
+      hour: "14:00",
+      aqi: 240,
+      category: "Unhealthy",
+      pm25: 140,
+      pm10: 220,
+      temperature: 23.0,
+      humidity: 50,
+      windSpeed: 6.5,
+      temperatureInversion: false,
+      condition: "Optimal afternoon solar mixing window",
+      recommendation: "Safest window of the day. Brief 15-20 min cross-ventilation flush recommended, followed by re-sealing."
+    },
+    {
+      hour: "16:00",
+      aqi: 285,
+      category: "Unhealthy",
+      pm25: 168,
+      pm10: 260,
+      temperature: 21.0,
+      humidity: 56,
+      windSpeed: 4.8,
+      temperatureInversion: false,
+      condition: "Evening cooling begins; winds dropping",
+      recommendation: "Solar mixing ending. Reseal all windows before evening rush hour begins."
+    },
+    {
+      hour: "18:00",
+      aqi: 360,
+      category: "Very Unhealthy",
+      pm25: 220,
+      pm10: 350,
+      temperature: 18.5,
+      humidity: 68,
+      windSpeed: 2.8,
+      temperatureInversion: true,
+      condition: "Evening rush hour & secondary inversion formation",
+      recommendation: "Evening tailpipe surge. Turn on kitchen exhaust for cooking; seal door threshold gaps."
+    },
+    {
+      hour: "20:00",
+      aqi: 390,
+      category: "Hazardous",
+      pm25: 248,
+      pm10: 390,
+      temperature: 16.0,
+      humidity: 76,
+      windSpeed: 2.0,
+      temperatureInversion: true,
+      condition: "Trapped surface emissions & falling boundary height",
+      recommendation: "Avoid any outdoor activity. Keep children and seniors in rooms with active filtration."
+    },
+    {
+      hour: "22:00",
+      aqi: 415,
+      category: "Hazardous",
+      pm25: 265,
+      pm10: 420,
+      temperature: 14.5,
+      humidity: 82,
+      windSpeed: 1.5,
+      temperatureInversion: true,
+      condition: "Dense nocturnal haze layer",
+      recommendation: "Close bedroom door to restrict volume; operate room purifier or Corsi-Rosenthal fan on sleep mode."
+    },
+    {
+      hour: "00:00",
+      aqi: 425,
+      category: "Hazardous",
+      pm25: 275,
+      pm10: 430,
+      temperature: 13.8,
+      humidity: 85,
+      windSpeed: 1.2,
+      temperatureInversion: true,
+      condition: "Near zero surface dispersion",
+      recommendation: "Complete overnight isolation. Maintain filtered indoor air below 25 µg/m³ for lung recovery."
+    }
   ],
   safeOutdoorWindows: [
     { start: "13:30", end: "15:30", aqi: 240, condition: "Afternoon thermal boundary expansion (Lowest relative PM2.5)" }
@@ -77,10 +197,10 @@ export const FALLBACK_AQI_DATA: AQIData = {
 export async function fetchLiveAQI(lat: number, lon: number): Promise<AQIData> {
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 6000);
+    const timeout = setTimeout(() => controller.abort(), 6500);
 
     const aqiUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=pm10,pm2_5,carbon_monoxide,nitrogen_dioxide,ozone&hourly=pm10,pm2_5&timezone=auto`;
-    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m&timezone=auto`;
+    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m&timezone=auto`;
 
     const [aqiRes, weatherRes] = await Promise.allSettled([
       fetch(aqiUrl, { signal: controller.signal, next: { revalidate: 600 } }),
@@ -95,6 +215,7 @@ export async function fetchLiveAQI(lat: number, lon: number): Promise<AQIData> {
     let o3 = 30;
     let hourlyTimes: string[] = [];
     let hourlyPm25: number[] = [];
+    let hourlyPm10: number[] = [];
 
     if (aqiRes.status === "fulfilled" && aqiRes.value.ok) {
       const data = await aqiRes.value.json();
@@ -105,17 +226,24 @@ export async function fetchLiveAQI(lat: number, lon: number): Promise<AQIData> {
       o3 = Number(data.current?.ozone ?? 30);
       hourlyTimes = data.hourly?.time || [];
       hourlyPm25 = data.hourly?.pm2_5 || [];
+      hourlyPm10 = data.hourly?.pm10 || [];
     }
 
     let temp = 19;
     let humidity = 70;
     let windSpeed = 3.0;
+    let hourlyTemp: number[] = [];
+    let hourlyHumidity: number[] = [];
+    let hourlyWind: number[] = [];
 
     if (weatherRes.status === "fulfilled" && weatherRes.value.ok) {
       const wData = await weatherRes.value.json();
       temp = Number(wData.current?.temperature_2m ?? 19);
       humidity = Number(wData.current?.relative_humidity_2m ?? 70);
       windSpeed = Number(wData.current?.wind_speed_10m ?? 3.0);
+      hourlyTemp = wData.hourly?.temperature_2m || [];
+      hourlyHumidity = wData.hourly?.relative_humidity_2m || [];
+      hourlyWind = wData.hourly?.wind_speed_10m || [];
     }
 
     const { aqi, category } = calculateAQIFromPM25(currentPm25);
@@ -129,11 +257,10 @@ export async function fetchLiveAQI(lat: number, lon: number): Promise<AQIData> {
     // Temperature Inversion detection: Low surface wind + winter ground temperature
     const temperatureInversion = windSpeed < 6.0 && temp < 23;
 
-    // Build forecast hourly
-    const forecastHourly = [];
+    // Build rich 24-hour forecast array
+    const forecastHourly: HourlyForecastItem[] = [];
     const nowHour = new Date().getHours();
-    
-    // Find index of current hour in hourlyTimes
+
     let startIndex = 0;
     if (hourlyTimes.length > 0) {
       const nowStr = new Date().toISOString().slice(0, 13);
@@ -141,16 +268,53 @@ export async function fetchLiveAQI(lat: number, lon: number): Promise<AQIData> {
       if (matchIdx !== -1) startIndex = matchIdx;
     }
 
-    for (let i = 0; i < Math.min(12, hourlyTimes.length - startIndex); i++) {
-      const timeStr = hourlyTimes[startIndex + i];
+    const count = Math.min(24, Math.max(12, hourlyTimes.length - startIndex));
+    for (let i = 0; i < count; i++) {
+      const idx = startIndex + i;
+      const timeStr = hourlyTimes[idx];
       const hourPart = timeStr ? timeStr.split("T")[1]?.slice(0, 5) : `${(nowHour + i) % 24}:00`;
-      const val = Math.round(hourlyPm25[startIndex + i] || currentPm25);
-      const calculated = calculateAQIFromPM25(val);
+      const valPm25 = Math.round(hourlyPm25[idx] || currentPm25);
+      const valPm10 = Math.round(hourlyPm10[idx] || (valPm25 * 1.5));
+      const valTemp = hourlyTemp[idx] !== undefined ? Math.round(hourlyTemp[idx] * 10) / 10 : temp;
+      const valHumidity = hourlyHumidity[idx] !== undefined ? Math.round(hourlyHumidity[idx]) : humidity;
+      const valWind = hourlyWind[idx] !== undefined ? Math.round(hourlyWind[idx] * 10) / 10 : windSpeed;
+      const hourNum = parseInt(hourPart.split(":")[0]);
+      const hourInversion = valWind < 6.0 && valTemp < 23 && (hourNum < 11 || hourNum > 17);
+
+      const calculated = calculateAQIFromPM25(valPm25);
+
+      let condition = "Moderate dispersion";
+      let recommendation = "Standard clean air precautions.";
+
+      if (hourNum >= 5 && hourNum <= 9) {
+        condition = "Morning boundary inversion peak";
+        recommendation = "Morning ground inversion traps vehicle soot. Avoid outdoor exercise; keep windows shut.";
+      } else if (hourNum > 9 && hourNum <= 12) {
+        condition = "Mid-morning traffic corridor";
+        recommendation = "High traffic emissions. Wear sealed N95 respirator if stepping out.";
+      } else if (hourNum > 12 && hourNum <= 16) {
+        condition = "Afternoon solar mixing window (Daily PM2.5 minimum)";
+        recommendation = "Safest window of the day. Ideal for brief 15-20 min cross-ventilation flush.";
+      } else if (hourNum > 16 && hourNum <= 20) {
+        condition = "Evening rush hour & cooling ingress";
+        recommendation = "Evening emissions rising. Keep kitchen exhaust on; seal door gaps.";
+      } else {
+        condition = "Dense nocturnal smog layer";
+        recommendation = "Low nocturnal boundary layer. Keep bedroom sealed with active air filtration.";
+      }
+
       forecastHourly.push({
         hour: hourPart,
         aqi: calculated.aqi,
-        pm25: val,
-        condition: val > 200 ? "Severe nocturnal smog" : val > 100 ? "Moderate haze" : "Moderate mixing"
+        category: calculated.category,
+        pm25: valPm25,
+        pm10: valPm10,
+        temperature: valTemp,
+        humidity: valHumidity,
+        windSpeed: valWind,
+        temperatureInversion: hourInversion,
+        condition,
+        recommendation
       });
     }
 
@@ -163,8 +327,8 @@ export async function fetchLiveAQI(lat: number, lon: number): Promise<AQIData> {
       let minVal = Infinity;
       let minHour = "14:00";
       forecastHourly.forEach(f => {
-        const hourNum = parseInt(f.hour.split(":")[0]);
-        if (hourNum >= 11 && hourNum <= 17 && f.pm25 < minVal) {
+        const h = parseInt(f.hour.split(":")[0]);
+        if (h >= 11 && h <= 17 && f.pm25 < minVal) {
           minVal = f.pm25;
           minHour = f.hour;
         }
