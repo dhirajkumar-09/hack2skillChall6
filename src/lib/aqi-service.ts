@@ -271,7 +271,7 @@ export async function fetchLiveAQI(lat: number, lon: number): Promise<AQIData> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 6500);
 
-    const aqiUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=pm10,pm2_5,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone&hourly=pm10,pm2_5&timezone=auto`;
+    const aqiUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=pm10,pm2_5,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone,us_aqi&hourly=pm10,pm2_5,us_aqi&timezone=auto`;
     const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,surface_pressure,visibility&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m&daily=sunrise,sunset&timezone=auto`;
 
     const [aqiRes, weatherRes] = await Promise.allSettled([
@@ -286,9 +286,11 @@ export async function fetchLiveAQI(lat: number, lon: number): Promise<AQIData> {
     let co = 1.2;
     let o3 = 30;
     let so2 = 13;
+    let liveUsAqi: number | null = null;
     let hourlyTimes: string[] = [];
     let hourlyPm25: number[] = [];
     let hourlyPm10: number[] = [];
+    let hourlyUsAqi: number[] = [];
 
     if (aqiRes.status === "fulfilled" && aqiRes.value.ok) {
       const data = await aqiRes.value.json();
@@ -298,9 +300,13 @@ export async function fetchLiveAQI(lat: number, lon: number): Promise<AQIData> {
       co = Number((data.current?.carbon_monoxide ? data.current.carbon_monoxide / 1000 : 1.2).toFixed(1));
       o3 = Number(data.current?.ozone ?? 30);
       so2 = Number(data.current?.sulphur_dioxide ?? 13);
+      if (data.current?.us_aqi !== undefined && data.current?.us_aqi !== null) {
+        liveUsAqi = Math.round(Number(data.current.us_aqi));
+      }
       hourlyTimes = data.hourly?.time || [];
       hourlyPm25 = data.hourly?.pm2_5 || [];
       hourlyPm10 = data.hourly?.pm10 || [];
+      hourlyUsAqi = data.hourly?.us_aqi || [];
     }
 
     let temp = 17.5;
@@ -333,6 +339,7 @@ export async function fetchLiveAQI(lat: number, lon: number): Promise<AQIData> {
     }
 
     const { cpcbAqi, cpcbCategory, epaAqi, epaCategory } = calculateBothAQI(currentPm25);
+    const finalEpaAqi = liveUsAqi !== null && liveUsAqi > 0 ? liveUsAqi : epaAqi;
 
     // Primary pollutant detection: Compare PM2.5 vs PM10 vs NO2
     let primaryPollutant: 'PM2.5' | 'PM10' | 'NO2' = "PM2.5";
@@ -368,6 +375,7 @@ export async function fetchLiveAQI(lat: number, lon: number): Promise<AQIData> {
       const hourInversion = valWind < 6.0 && valTemp < 23 && (hourNum < 11 || hourNum > 17);
 
       const both = calculateBothAQI(valPm25);
+      const hourEpa = hourlyUsAqi[idx] || both.epaAqi;
 
       let condition = "Moderate dispersion";
       let recommendation = "Standard clean air precautions.";
@@ -393,7 +401,7 @@ export async function fetchLiveAQI(lat: number, lon: number): Promise<AQIData> {
         hour: hourPart,
         aqi: both.cpcbAqi,
         cpcbAqi: both.cpcbAqi,
-        epaAqi: both.epaAqi,
+        epaAqi: hourEpa,
         category: both.cpcbCategory,
         pm25: valPm25,
         pm10: valPm10,
@@ -432,7 +440,7 @@ export async function fetchLiveAQI(lat: number, lon: number): Promise<AQIData> {
     return {
       aqi: cpcbAqi,
       cpcbAqi,
-      epaAqi,
+      epaAqi: finalEpaAqi,
       category: cpcbCategory,
       primaryPollutant,
       pm25: Math.round(currentPm25),

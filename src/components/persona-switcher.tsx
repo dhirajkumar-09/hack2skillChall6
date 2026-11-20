@@ -35,10 +35,10 @@ export function PersonaSwitcher() {
       <div className="flex items-center justify-between mb-2.5">
         <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5 uppercase tracking-wider">
           <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-          {isHi ? "1-क्लिक टेस्ट व्यक्ति (Persona) चुनें" : "Quick Persona Switcher (Instant Demo)"}
+          {isHi ? "वास्तविक पारिवारिक परिदृश्य (Household Profiles)" : "Explore Household Profiles"}
         </span>
-        <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full font-mono">
-          Demo Testing
+        <span className="text-[10px] bg-cyan-950/70 border border-cyan-800/60 text-cyan-300 px-2.5 py-0.5 rounded-full font-semibold">
+          {isHi ? "3 प्रमाणित प्रोफाइल" : "3 Verified Personas"}
         </span>
       </div>
 

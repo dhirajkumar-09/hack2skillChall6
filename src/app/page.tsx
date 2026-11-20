@@ -119,7 +119,7 @@ export default function DashboardPage() {
           </button>
 
           {/* Quick city pill shortcuts */}
-          {POPULAR_CITIES.slice(0, 4).map((city, idx) => {
+          {POPULAR_CITIES.slice(0, 6).map((city, idx) => {
             const isCurrent = Math.abs(city.lat - profile.latitude) < 0.05 && Math.abs(city.lon - profile.longitude) < 0.05;
             return (
               <button

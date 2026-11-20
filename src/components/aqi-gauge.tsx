@@ -21,7 +21,9 @@ import {
   Sunrise,
   Sunset,
   ShieldCheck,
-  Info
+  Info,
+  Building2,
+  Loader2
 } from "lucide-react";
 
 interface AqiGaugeProps {
@@ -31,12 +33,32 @@ interface AqiGaugeProps {
 }
 
 export function AqiGauge({ data, language = 'en', onOpenLocationSelector }: AqiGaugeProps) {
-  const { aqiStandard, setAqiStandard, manualPm25, calibrateSensor } = useApp();
+  const { profile, aqiStandard, setAqiStandard, manualPm25, calibrateSensor } = useApp();
   const isHi = language === 'hi';
   const [selectedHourIndex, setSelectedHourIndex] = useState<number | null>(null);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [showCalibrateModal, setShowCalibrateModal] = useState(false);
+  const [showStationModal, setShowStationModal] = useState(false);
+  const [stationData, setStationData] = useState<{ city: string; stations: string[]; keyFactors: string[]; summary?: string } | null>(null);
+  const [stationLoading, setStationLoading] = useState(false);
   const [customPmInput, setCustomPmInput] = useState<string>(String(data.pm25 || 182));
+
+  const handleOpenStations = async () => {
+    setShowStationModal(true);
+    const city = profile.locationName.split("(")[0].split(",")[0].trim() || "Patna";
+    setStationLoading(true);
+    try {
+      const res = await fetch(`/api/station-lookup?city=${encodeURIComponent(city)}`);
+      if (res.ok) {
+        const json = await res.json();
+        setStationData(json);
+      }
+    } catch (e) {
+      console.warn("Station lookup error:", e);
+    } finally {
+      setStationLoading(false);
+    }
+  };
 
   // Determine which data point to display (Live current vs Selected hour)
   const isTimeTraveling = selectedHourIndex !== null && data.forecastHourly && data.forecastHourly[selectedHourIndex];
@@ -217,8 +239,8 @@ export function AqiGauge({ data, language = 'en', onOpenLocationSelector }: AqiG
           </button>
         </div>
 
-        {/* Explain / Calibrate buttons */}
-        <div className="flex items-center gap-1.5">
+        {/* Explain / Calibrate / Stations buttons */}
+        <div className="flex items-center gap-1.5 flex-wrap">
           <button
             onClick={() => setShowInfoModal(true)}
             className="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-cyan-400 text-xs font-medium flex items-center gap-1.5 transition"
@@ -226,6 +248,15 @@ export function AqiGauge({ data, language = 'en', onOpenLocationSelector }: AqiG
           >
             <HelpCircle className="w-3.5 h-3.5" />
             <span>{isHi ? "फ़ोन में 182 क्यों?" : "Why phone says 182?"}</span>
+          </button>
+
+          <button
+            onClick={handleOpenStations}
+            className="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-emerald-400 text-xs font-medium flex items-center gap-1.5 transition"
+            title="View official CPCB Continuous Ambient Air Quality Monitoring Stations"
+          >
+            <Building2 className="w-3.5 h-3.5" />
+            <span>{isHi ? "स्टेशन जानकारी" : "Stations"}</span>
           </button>
 
           <button
@@ -652,6 +683,84 @@ export function AqiGauge({ data, language = 'en', onOpenLocationSelector }: AqiG
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* POPUP MODAL 3: Official CAAQMS Stations for active city */}
+      {showStationModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
+          <div className="bg-surface-card border border-surface-border rounded-2xl p-5 max-w-lg w-full shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto scrollbar-thin">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400">
+                  <Building2 className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">
+                    {profile.locationName.split("(")[0]} · {isHi ? "आधिकारिक CAAQMS मॉनिटरिंग स्टेशन" : "Official CAAQMS Stations"}
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Central Pollution Control Board (CPCB) & State PCB Network
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowStationModal(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {stationLoading ? (
+              <div className="py-8 flex flex-col items-center justify-center gap-2 text-xs text-slate-400">
+                <Loader2 className="w-6 h-6 text-cyan-400 animate-spin" />
+                <span>Fetching official CAAQMS station intelligence...</span>
+              </div>
+            ) : stationData ? (
+              <div className="space-y-3 text-xs text-slate-300">
+                {stationData.summary && (
+                  <p className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-200">
+                    {stationData.summary}
+                  </p>
+                )}
+
+                <div>
+                  <span className="font-bold text-emerald-300 block mb-1.5 uppercase text-[10px] tracking-wider">
+                    Continuous Ambient Air Monitoring Stations:
+                  </span>
+                  <div className="space-y-1.5">
+                    {stationData.stations?.map((st, i) => (
+                      <div key={i} className="p-2 rounded-lg bg-slate-900/80 border border-slate-800 flex items-center gap-2">
+                        <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                        <span className="text-white font-medium">{st}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <span className="font-bold text-amber-300 block mb-1.5 uppercase text-[10px] tracking-wider">
+                    Local Winter Topography & Air-Shed Factors:
+                  </span>
+                  <ul className="list-disc list-inside space-y-1 text-slate-300 bg-slate-900/40 p-2.5 rounded-xl border border-slate-800">
+                    {stationData.keyFactors?.map((fac, i) => (
+                      <li key={i}>{fac}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            ) : null}
+
+            <div className="flex items-center justify-between pt-2 border-t border-surface-border text-[11px] text-slate-400">
+              <span>Source: CPCB National Ambient Air Quality Grid</span>
+              <button
+                onClick={() => setShowStationModal(false)}
+                className="px-3 py-1.5 rounded-xl bg-slate-800 text-white font-semibold hover:bg-slate-700"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}
