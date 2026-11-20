@@ -216,6 +216,7 @@ export function AqiGauge({ data, language = 'en', onOpenLocationSelector }: AqiG
         <div className="flex items-center gap-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800">
           <button
             onClick={() => setAqiStandard("cpcb")}
+            aria-label="Switch to India CPCB National AQI standard"
             className={`px-3 py-1 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
               aqiStandard === "cpcb"
                 ? "bg-cyan-600 text-white shadow-md shadow-cyan-950"
@@ -229,6 +230,7 @@ export function AqiGauge({ data, language = 'en', onOpenLocationSelector }: AqiG
           </button>
           <button
             onClick={() => setAqiStandard("epa")}
+            aria-label="Switch to US EPA / AccuWeather AQI standard"
             className={`px-3 py-1 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
               aqiStandard === "epa"
                 ? "bg-cyan-600 text-white shadow-md shadow-cyan-950"
@@ -246,27 +248,30 @@ export function AqiGauge({ data, language = 'en', onOpenLocationSelector }: AqiG
         <div className="flex items-center gap-1.5 flex-wrap">
           <button
             onClick={() => setShowInfoModal(true)}
+            aria-label="Learn why phone apps show different AQI than CPCB stations"
             className="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-cyan-400 text-xs font-medium flex items-center gap-1.5 transition"
             title="Learn why phone apps show 182 while CPCB shows 335"
           >
-            <HelpCircle className="w-3.5 h-3.5" />
+            <HelpCircle className="w-3.5 h-3.5" aria-hidden="true" />
             <span>{isHi ? "फ़ोन में 182 क्यों?" : "Why phone says 182?"}</span>
           </button>
 
           <button
             onClick={handleOpenStations}
+            aria-label="View official CPCB and State Board Continuous Ambient Air Quality Monitoring Stations"
             className="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-emerald-400 text-xs font-medium flex items-center gap-1.5 transition"
             title="View official CPCB Continuous Ambient Air Quality Monitoring Stations"
           >
-            <Building2 className="w-3.5 h-3.5" />
+            <Building2 className="w-3.5 h-3.5" aria-hidden="true" />
             <span>{isHi ? "स्टेशन जानकारी" : "Stations"}</span>
           </button>
 
           <button
             onClick={() => setShowCalibrateModal(true)}
+            aria-label="Sync and calibrate dashboard with phone or sensor reading"
             className="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-amber-400 text-xs font-medium flex items-center gap-1.5 transition"
           >
-            <Sliders className="w-3.5 h-3.5" />
+            <Sliders className="w-3.5 h-3.5" aria-hidden="true" />
             <span>{data.isCalibrated ? (isHi ? "कैलिब्रेटेड" : "Calibrated") : (isHi ? "फ़ोन सिंक" : "Sync Phone")}</span>
           </button>
         </div>

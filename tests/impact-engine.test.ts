@@ -85,4 +85,51 @@ describe("Impact Engine - Deterministic Calculations", () => {
     expect(impact.commuteSwap.monthlyPm25AvoidedGrams).toBeGreaterThan(10);
     expect(impact.commuteSwap.monthlyMoneySavedInr).toBeGreaterThan(1000);
   });
+
+  it("calculates senior with COPD risk profile accurately during hazardous smog", () => {
+    const seniorMember: HouseholdMember = {
+      id: "s_1",
+      name: "Ramesh Sharma",
+      role: "senior",
+      age: 71,
+      sensitivities: ["copd", "heart_condition"]
+    };
+
+    const assessment = calculateMemberRisk(seniorMember, 280, 80, 1.5);
+    expect(assessment.riskLevel).toBe("Critical");
+    expect(assessment.keyWarning).toContain("Severe smog alert");
+    expect(assessment.cigaretteEquivDay).toBeGreaterThan(2);
+  });
+
+  it("identifies undersized room filtration when CADR delivers under 3.5 ACH", () => {
+    // Large hall: 25ft x 20ft with 10ft ceiling = 5000 cu ft
+    // Tiny air purifier with only 100 CFM:
+    // ACH = (100 * 60) / 5000 = 1.2 ACH (< 3.5 ACH)
+    const undersized = calculateRoomAirExchange(25, 20, 10, 100);
+    expect(undersized.roomVolumeCuFt).toBe(5000);
+    expect(undersized.currentAch).toBe(1.2);
+    expect(undersized.adequacyStatus).toBe("Undersized");
+    expect(undersized.recommendedCadrCfm).toBeGreaterThanOrEqual(400);
+  });
+
+  it("evaluates two-wheeler commute transition to electric metro", () => {
+    const twoWheelerSwap = calculateSwapImpact("two_wheeler", 30, "wood_coal_angithi", 6);
+    expect(twoWheelerSwap.commuteSwap.monthlyCo2eAvoidedKg).toBeGreaterThan(5);
+    expect(twoWheelerSwap.commuteSwap.monthlyPm25AvoidedGrams).toBeGreaterThan(5);
+    expect(twoWheelerSwap.heatingSwap.monthlyPmSavedGrams).toBeGreaterThan(1000);
+  });
+
+  it("evaluates low-exposure baseline for healthy indoor air below WHO limits", () => {
+    const healthyAdult: HouseholdMember = {
+      id: "a_1",
+      name: "Ananya",
+      role: "adult",
+      age: 28,
+      sensitivities: []
+    };
+
+    const cleanAir = calculateMemberRisk(healthyAdult, 15, 10, 1);
+    expect(cleanAir.riskLevel).toBe("Low");
+    expect(cleanAir.keyWarning).toContain("acceptable safety parameters");
+  });
 });

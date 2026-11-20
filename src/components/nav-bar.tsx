@@ -68,6 +68,7 @@ export function NavBar() {
               <button
                 type="button"
                 onClick={() => setShowLocationModal(true)}
+                aria-label="Change current monitoring location"
                 className="text-[11px] text-slate-400 hover:text-cyan-300 transition flex items-center gap-1 text-left line-clamp-1 max-w-[140px] sm:max-w-xs"
                 title="Change Location & Live AQI"
               >
@@ -119,20 +120,22 @@ export function NavBar() {
             {/* Language Switcher */}
             <button
               onClick={() => setLanguage(language === "en" ? "hi" : "en")}
+              aria-label={language === "en" ? "Switch language to Hindi" : "Switch language to English"}
               className="px-2.5 py-1 text-xs font-medium rounded-xl border border-slate-700 bg-slate-900/60 text-slate-200 hover:bg-slate-800 flex items-center gap-1 transition"
               title="Toggle Language (English / हिन्दी)"
             >
-              <Globe2 className="w-3.5 h-3.5 text-cyan-400" />
+              <Globe2 className="w-3.5 h-3.5 text-cyan-400" aria-hidden="true" />
               <span>{language === "en" ? "हिन्दी" : "EN"}</span>
             </button>
 
             {/* Refresh AQI */}
             <button
               onClick={() => refreshAQI()}
+              aria-label="Refresh live air quality data"
               className="p-1.5 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 border border-transparent hover:border-slate-700 transition"
               title="Refresh live air quality"
             >
-              <RefreshCw className="w-4 h-4" />
+              <RefreshCw className="w-4 h-4" aria-hidden="true" />
             </button>
           </div>
         </div>

@@ -157,13 +157,13 @@ export function LocationSelector({ isOpen, onClose }: LocationSelectorProps) {
   );
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200" role="dialog" aria-modal="true" aria-labelledby="location-modal-title">
       <div className="bg-surface-card border border-surface-border rounded-2xl p-5 max-w-lg w-full shadow-2xl space-y-4 max-h-[92vh] overflow-y-auto scrollbar-thin">
         {/* Header */}
         <div className="flex items-start justify-between">
           <div>
-            <h3 className="text-base font-bold text-white flex items-center gap-2">
-              <MapPin className="w-5 h-5 text-cyan-400" />
+            <h3 id="location-modal-title" className="text-base font-bold text-white flex items-center gap-2">
+              <MapPin className="w-5 h-5 text-cyan-400" aria-hidden="true" />
               {isHi ? "स्थान व स्टेशन चुनें (Live City AQI Search)" : "Search Any City · Live Station Data"}
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
@@ -174,9 +174,10 @@ export function LocationSelector({ isOpen, onClose }: LocationSelectorProps) {
           </div>
           <button
             onClick={onClose}
-            className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
+            aria-label="Close location selector"
+            className="p-1 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
@@ -199,18 +200,20 @@ export function LocationSelector({ isOpen, onClose }: LocationSelectorProps) {
         <button
           onClick={handleGpsDetect}
           disabled={gpsLoading}
+          aria-label={isHi ? "मेरे वर्तमान GPS स्थान का उपयोग करें" : "Auto-Detect My GPS Location"}
           className="w-full p-2.5 rounded-xl bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 text-white font-semibold text-xs flex items-center justify-center gap-2 transition shadow-lg shadow-cyan-950 disabled:opacity-50"
         >
-          <Navigation className={`w-4 h-4 ${gpsLoading ? "animate-spin" : ""}`} />
+          <Navigation className={`w-4 h-4 ${gpsLoading ? "animate-spin" : ""}`} aria-hidden="true" />
           <span>{gpsLoading ? (isHi ? "GPS लोकेशन खोजी जा रही है..." : "Detecting Exact GPS Station...") : (isHi ? "मेरे वर्तमान GPS स्थान का उपयोग करें" : "Auto-Detect My GPS Location")}</span>
         </button>
 
         {/* Dynamic City Search Bar */}
         <div className="space-y-1.5">
           <div className="relative">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" aria-hidden="true" />
             <input
               type="text"
+              aria-label={isHi ? "शहर या निगरानी स्टेशन खोजें" : "Search city or monitoring station"}
               placeholder={isHi ? "कोई भी शहर टाइप करें (उदा. Patna, Gaya, Varanasi, Lucknow...)" : "Type any city name (e.g. Patna, Varanasi, Gaya, London...)"}
               value={search}
               onChange={(e) => setSearch(e.target.value)}

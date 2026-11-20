@@ -1,5 +1,5 @@
 import { DailyCleanAirPlan, UserProfile, AQIData, ChatMessage } from "@/types";
-import { queryKnowledgeBase } from "./rag-store";
+import { queryKnowledgeBase, KnowledgeChunk } from "./rag-store";
 
 export interface LLMProviderConfig {
   apiKey?: string;
@@ -85,7 +85,7 @@ function generateDeterministicDailyPlan(
 
   const maskRec = {
     recommended: aqi > 100,
-    type: (isSevere ? "N95 / FFP2 / KN95" : "N95 / FFP2 / KN95") as any,
+    type: "N95 / FFP2 / KN95" as const,
     when: isHindi 
       ? "घर से बाहर निकलते ही हर समय पहनें (विशेष रूप से मेट्रो/बस/बाइक यात्रा पर)"
       : "Mandatory whenever stepping outdoors, particularly during vehicular transit and street walking.",
@@ -223,7 +223,7 @@ function generateDeterministicChatReply(
   query: string,
   profile: UserProfile,
   aqiData: AQIData,
-  retrieved: any[],
+  retrieved: KnowledgeChunk[],
   language: 'en' | 'hi'
 ) {
   const isHi = language === 'hi';
@@ -404,7 +404,7 @@ async function callGeminiChat(
   history: ChatMessage[],
   profile: UserProfile,
   aqiData: AQIData,
-  retrieved: any[],
+  retrieved: KnowledgeChunk[],
   language: 'en' | 'hi'
 ) {
   const context = `Location: ${profile.locationName}, Current AQI: ${aqiData.aqi} (${aqiData.category}), PM2.5: ${aqiData.pm25} ug/m3.

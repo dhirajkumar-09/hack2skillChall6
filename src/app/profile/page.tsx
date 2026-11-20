@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import { useApp } from "@/context/app-context";
 import { PersonaSwitcher } from "@/components/persona-switcher";
-import { UserProfile, Sensitivity, MemberRole } from "@/types";
+import { UserProfile, Sensitivity, MemberRole, HomeType, CookingFuel, HeatingMethod, CommuteMode } from "@/types";
 import { 
   UserCircle2, 
   MapPin, 
@@ -263,7 +263,7 @@ export default function ProfilePage() {
               <label className="text-slate-400 block mb-1">Home Envelope Type</label>
               <select
                 value={formData.homeType}
-                onChange={(e) => setFormData({ ...formData, homeType: e.target.value as any })}
+                onChange={(e) => setFormData({ ...formData, homeType: e.target.value as HomeType })}
                 className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white"
               >
                 <option value="apartment_sealed">Apartment (Sealed Double Glazing)</option>
@@ -277,7 +277,7 @@ export default function ProfilePage() {
               <label className="text-slate-400 block mb-1">Cooking Fuel</label>
               <select
                 value={formData.cookingFuel}
-                onChange={(e) => setFormData({ ...formData, cookingFuel: e.target.value as any })}
+                onChange={(e) => setFormData({ ...formData, cookingFuel: e.target.value as CookingFuel })}
                 className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white"
               >
                 <option value="lpg_gas">LPG Cylinders / Piped Gas</option>
@@ -290,7 +290,7 @@ export default function ProfilePage() {
               <label className="text-slate-400 block mb-1">Heating Method in Winter</label>
               <select
                 value={formData.heatingMethod}
-                onChange={(e) => setFormData({ ...formData, heatingMethod: e.target.value as any })}
+                onChange={(e) => setFormData({ ...formData, heatingMethod: e.target.value as HeatingMethod })}
                 className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white"
               >
                 <option value="electric_heat">Electric Heater / Radiator</option>
@@ -303,7 +303,7 @@ export default function ProfilePage() {
               <label className="text-slate-400 block mb-1">Daily Commute Mode</label>
               <select
                 value={formData.commuteMode}
-                onChange={(e) => setFormData({ ...formData, commuteMode: e.target.value as any })}
+                onChange={(e) => setFormData({ ...formData, commuteMode: e.target.value as CommuteMode })}
                 className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-white"
               >
                 <option value="metro_train">Metro Rail / Suburban Train</option>

@@ -16,6 +16,31 @@ import {
 } from "lucide-react";
 import { getTranslation } from "@/lib/i18n";
 
+interface SpeechRecognitionEvent {
+  results: {
+    [key: number]: {
+      [key: number]: {
+        transcript: string;
+      };
+    };
+  };
+}
+
+interface ISpeechRecognition {
+  lang: string;
+  interimResults: boolean;
+  start: () => void;
+  stop: () => void;
+  onresult: (event: SpeechRecognitionEvent) => void;
+  onerror: () => void;
+  onend: () => void;
+}
+
+interface WindowWithSpeech extends Window {
+  SpeechRecognition?: new () => ISpeechRecognition;
+  webkitSpeechRecognition?: new () => ISpeechRecognition;
+}
+
 export default function ChatPage() {
   const { profile, aqiData, language, geminiApiKey } = useApp();
   const isHi = language === "hi";
@@ -112,7 +137,10 @@ export default function ChatPage() {
       return;
     }
 
-    const SpeechRec = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    const win = window as unknown as WindowWithSpeech;
+    const SpeechRec = win.SpeechRecognition || win.webkitSpeechRecognition;
+    if (!SpeechRec) return;
+
     const recognition = new SpeechRec();
     recognition.lang = language === "hi" ? "hi-IN" : "en-US";
     recognition.interimResults = false;
@@ -121,8 +149,8 @@ export default function ChatPage() {
       recognition.start();
       setIsListening(true);
 
-      recognition.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
+      recognition.onresult = (event: SpeechRecognitionEvent) => {
+        const transcript = event.results[0]?.[0]?.transcript || "";
         setInput(transcript);
         setIsListening(false);
       };
