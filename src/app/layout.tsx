@@ -37,7 +37,7 @@ export default function RootLayout({
         <AppProvider>
           <div className="flex flex-col min-h-screen">
             <NavBar />
-            <main className="flex-1 pb-24 pt-4 px-3 sm:px-6 max-w-4xl mx-auto w-full">
+            <main className="flex-1 pb-24 pt-4 px-3 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
               {children}
             </main>
           </div>

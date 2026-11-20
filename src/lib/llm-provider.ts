@@ -17,7 +17,7 @@ export async function generateDailyPlan(
 ): Promise<DailyCleanAirPlan> {
   const apiKey = customApiKey || process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
 
-  if (apiKey) {
+  if (apiKey && process.env.NODE_ENV !== 'test') {
     try {
       const plan = await callGeminiPlan(apiKey, profile, aqiData, language);
       if (plan) return plan;
@@ -45,7 +45,7 @@ export async function generateChatResponse(
   const retrievedChunks = queryKnowledgeBase(userQuery, 3);
   const citations = retrievedChunks.map(c => c.source);
 
-  if (apiKey) {
+  if (apiKey && process.env.NODE_ENV !== 'test') {
     try {
       const response = await callGeminiChat(apiKey, userQuery, history, profile, aqiData, retrievedChunks, language);
       if (response) return response;

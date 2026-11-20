@@ -45,7 +45,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [totalSavedMoneyInr, setTotalSavedMoneyInr] = useState<number>(45);
   const [streakDays, setStreakDays] = useState<number>(4);
   const [indoorSensorReading, setIndoorSensorReading] = useState<number | null>(null);
-  const [geminiApiKey, setGeminiApiKeyState] = useState<string>("");
+  const DEFAULT_GEMINI_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || "";
+  const [geminiApiKey, setGeminiApiKeyState] = useState<string>(DEFAULT_GEMINI_KEY);
 
   // Initialize from LocalStorage or live fetch
   useEffect(() => {
@@ -58,6 +59,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const savedKey = localStorage.getItem("smogshield_gemini_key");
       if (savedKey) {
         setGeminiApiKeyState(savedKey);
+      } else {
+        setGeminiApiKeyState(DEFAULT_GEMINI_KEY);
+        try { localStorage.setItem("smogshield_gemini_key", DEFAULT_GEMINI_KEY); } catch {}
       }
 
       const savedStd = localStorage.getItem("smogshield_aqi_standard") as AQIStandard;
