@@ -1,35 +1,80 @@
-import { AQICategory, AQIData, HourlyForecastItem } from "@/types";
+import { AQICategory, AQIData, HourlyForecastItem, AQIStandard } from "@/types";
+
+/**
+ * Calculate both India CPCB and US EPA / AccuWeather AQI from PM2.5
+ */
+export function calculateBothAQI(pm25: number): {
+  cpcbAqi: number;
+  cpcbCategory: AQICategory;
+  epaAqi: number;
+  epaCategory: AQICategory;
+} {
+  // 1. CPCB (India National Air Quality Index, INAQI)
+  let cpcbAqi: number;
+  let cpcbCategory: AQICategory;
+  if (pm25 <= 30) {
+    cpcbAqi = Math.round((50 / 30) * pm25);
+    cpcbCategory = "Good";
+  } else if (pm25 <= 60) {
+    cpcbAqi = Math.round(51 + ((100 - 51) / (60 - 30)) * (pm25 - 30));
+    cpcbCategory = "Moderate";
+  } else if (pm25 <= 90) {
+    cpcbAqi = Math.round(101 + ((200 - 101) / (90 - 60)) * (pm25 - 60));
+    cpcbCategory = "Unhealthy for Sensitive Groups";
+  } else if (pm25 <= 120) {
+    cpcbAqi = Math.round(201 + ((300 - 201) / (120 - 90)) * (pm25 - 90));
+    cpcbCategory = "Unhealthy";
+  } else if (pm25 <= 250) {
+    cpcbAqi = Math.round(301 + ((400 - 301) / (250 - 120)) * (pm25 - 120));
+    cpcbCategory = "Very Unhealthy";
+  } else {
+    cpcbAqi = Math.min(500, Math.round(401 + ((500 - 401) / (380 - 250)) * (pm25 - 250)));
+    cpcbCategory = "Hazardous";
+  }
+
+  // 2. US EPA / Global Scale (Used by AccuWeather, HuaFeng, Apple Weather, Google)
+  let epaAqi: number;
+  let epaCategory: AQICategory;
+  if (pm25 <= 12.0) {
+    epaAqi = Math.round((50 / 12.0) * pm25);
+    epaCategory = "Good";
+  } else if (pm25 <= 35.4) {
+    epaAqi = Math.round(51 + ((100 - 51) / (35.4 - 12.1)) * (pm25 - 12.1));
+    epaCategory = "Moderate";
+  } else if (pm25 <= 55.4) {
+    epaAqi = Math.round(101 + ((150 - 101) / (55.4 - 35.5)) * (pm25 - 35.5));
+    epaCategory = "Unhealthy for Sensitive Groups";
+  } else if (pm25 <= 150.4) {
+    epaAqi = Math.round(151 + ((200 - 151) / (150.4 - 55.5)) * (pm25 - 55.5));
+    epaCategory = "Unhealthy";
+  } else if (pm25 <= 250.4) {
+    epaAqi = Math.round(201 + ((300 - 201) / (250.4 - 150.5)) * (pm25 - 150.5));
+    epaCategory = "Very Unhealthy";
+  } else if (pm25 <= 350.4) {
+    epaAqi = Math.round(301 + ((400 - 301) / (350.4 - 250.5)) * (pm25 - 250.5));
+    epaCategory = "Hazardous";
+  } else {
+    epaAqi = Math.min(500, Math.round(401 + ((500 - 401) / (500.4 - 350.5)) * (pm25 - 350.5)));
+    epaCategory = "Hazardous";
+  }
+
+  return { cpcbAqi, cpcbCategory, epaAqi, epaCategory };
+}
 
 /**
  * Convert PM2.5 (µg/m³) to AQI and Category
- * Adheres to standard CPCB / US EPA linear interpolation breakpoints
+ * Defaults to CPCB with optional EPA standard support
  */
-export function calculateAQIFromPM25(pm25: number): { aqi: number; category: AQICategory } {
-  let aqi: number;
-  let category: AQICategory;
+export function calculateAQIFromPM25(
+  pm25: number, 
+  standard: AQIStandard = 'cpcb'
+): { aqi: number; category: AQICategory; cpcbAqi: number; epaAqi: number } {
+  const { cpcbAqi, cpcbCategory, epaAqi, epaCategory } = calculateBothAQI(pm25);
 
-  if (pm25 <= 30) {
-    aqi = Math.round((50 / 30) * pm25);
-    category = "Good";
-  } else if (pm25 <= 60) {
-    aqi = Math.round(51 + ((100 - 51) / (60 - 30)) * (pm25 - 30));
-    category = "Moderate";
-  } else if (pm25 <= 90) {
-    aqi = Math.round(101 + ((200 - 101) / (90 - 60)) * (pm25 - 60));
-    category = "Unhealthy for Sensitive Groups";
-  } else if (pm25 <= 120) {
-    aqi = Math.round(201 + ((300 - 201) / (120 - 90)) * (pm25 - 90));
-    category = "Unhealthy";
-  } else if (pm25 <= 250) {
-    aqi = Math.round(301 + ((400 - 301) / (250 - 120)) * (pm25 - 120));
-    category = "Very Unhealthy";
-  } else {
-    // 250+ is Severe / Hazardous
-    aqi = Math.min(500, Math.round(401 + ((500 - 401) / (380 - 250)) * (pm25 - 250)));
-    category = "Hazardous";
+  if (standard === 'epa') {
+    return { aqi: epaAqi, category: epaCategory, cpcbAqi, epaAqi };
   }
-
-  return { aqi, category };
+  return { aqi: cpcbAqi, category: cpcbCategory, cpcbAqi, epaAqi };
 }
 
 /**
@@ -37,6 +82,8 @@ export function calculateAQIFromPM25(pm25: number): { aqi: number; category: AQI
  */
 export const FALLBACK_AQI_DATA: AQIData = {
   aqi: 382,
+  cpcbAqi: 382,
+  epaAqi: 286,
   category: "Hazardous",
   primaryPollutant: "PM2.5",
   pm25: 236,
@@ -44,14 +91,21 @@ export const FALLBACK_AQI_DATA: AQIData = {
   no2: 84,
   co: 2.1,
   o3: 28,
-  temperature: 16.5,
-  humidity: 78,
+  so2: 13,
+  temperature: 17.0,
+  humidity: 85,
   windSpeed: 3.2,
+  surfacePressure: 1017,
+  visibilityKm: 16,
+  sunrise: "06:12",
+  sunset: "16:58",
   temperatureInversion: true,
   forecastHourly: [
     {
       hour: "06:00",
       aqi: 412,
+      cpcbAqi: 412,
+      epaAqi: 310,
       category: "Hazardous",
       pm25: 260,
       pm10: 410,
@@ -65,6 +119,8 @@ export const FALLBACK_AQI_DATA: AQIData = {
     {
       hour: "08:00",
       aqi: 435,
+      cpcbAqi: 435,
+      epaAqi: 330,
       category: "Hazardous",
       pm25: 280,
       pm10: 440,
@@ -78,6 +134,8 @@ export const FALLBACK_AQI_DATA: AQIData = {
     {
       hour: "10:00",
       aqi: 395,
+      cpcbAqi: 395,
+      epaAqi: 295,
       category: "Very Unhealthy",
       pm25: 245,
       pm10: 390,
@@ -91,6 +149,8 @@ export const FALLBACK_AQI_DATA: AQIData = {
     {
       hour: "12:00",
       aqi: 310,
+      cpcbAqi: 310,
+      epaAqi: 230,
       category: "Very Unhealthy",
       pm25: 180,
       pm10: 290,
@@ -104,6 +164,8 @@ export const FALLBACK_AQI_DATA: AQIData = {
     {
       hour: "14:00",
       aqi: 240,
+      cpcbAqi: 240,
+      epaAqi: 194,
       category: "Unhealthy",
       pm25: 140,
       pm10: 220,
@@ -117,6 +179,8 @@ export const FALLBACK_AQI_DATA: AQIData = {
     {
       hour: "16:00",
       aqi: 285,
+      cpcbAqi: 285,
+      epaAqi: 218,
       category: "Unhealthy",
       pm25: 168,
       pm10: 260,
@@ -130,6 +194,8 @@ export const FALLBACK_AQI_DATA: AQIData = {
     {
       hour: "18:00",
       aqi: 360,
+      cpcbAqi: 360,
+      epaAqi: 270,
       category: "Very Unhealthy",
       pm25: 220,
       pm10: 350,
@@ -143,6 +209,8 @@ export const FALLBACK_AQI_DATA: AQIData = {
     {
       hour: "20:00",
       aqi: 390,
+      cpcbAqi: 390,
+      epaAqi: 298,
       category: "Hazardous",
       pm25: 248,
       pm10: 390,
@@ -156,6 +224,8 @@ export const FALLBACK_AQI_DATA: AQIData = {
     {
       hour: "22:00",
       aqi: 415,
+      cpcbAqi: 415,
+      epaAqi: 315,
       category: "Hazardous",
       pm25: 265,
       pm10: 420,
@@ -169,6 +239,8 @@ export const FALLBACK_AQI_DATA: AQIData = {
     {
       hour: "00:00",
       aqi: 425,
+      cpcbAqi: 425,
+      epaAqi: 325,
       category: "Hazardous",
       pm25: 275,
       pm10: 430,
@@ -199,8 +271,8 @@ export async function fetchLiveAQI(lat: number, lon: number): Promise<AQIData> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 6500);
 
-    const aqiUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=pm10,pm2_5,carbon_monoxide,nitrogen_dioxide,ozone&hourly=pm10,pm2_5&timezone=auto`;
-    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m&timezone=auto`;
+    const aqiUrl = `https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=pm10,pm2_5,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone&hourly=pm10,pm2_5&timezone=auto`;
+    const weatherUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,wind_speed_10m,surface_pressure,visibility&hourly=temperature_2m,relative_humidity_2m,wind_speed_10m&daily=sunrise,sunset&timezone=auto`;
 
     const [aqiRes, weatherRes] = await Promise.allSettled([
       fetch(aqiUrl, { signal: controller.signal, next: { revalidate: 600 } }),
@@ -213,6 +285,7 @@ export async function fetchLiveAQI(lat: number, lon: number): Promise<AQIData> {
     let no2 = 50;
     let co = 1.2;
     let o3 = 30;
+    let so2 = 13;
     let hourlyTimes: string[] = [];
     let hourlyPm25: number[] = [];
     let hourlyPm10: number[] = [];
@@ -224,29 +297,42 @@ export async function fetchLiveAQI(lat: number, lon: number): Promise<AQIData> {
       no2 = Number(data.current?.nitrogen_dioxide ?? 50);
       co = Number((data.current?.carbon_monoxide ? data.current.carbon_monoxide / 1000 : 1.2).toFixed(1));
       o3 = Number(data.current?.ozone ?? 30);
+      so2 = Number(data.current?.sulphur_dioxide ?? 13);
       hourlyTimes = data.hourly?.time || [];
       hourlyPm25 = data.hourly?.pm2_5 || [];
       hourlyPm10 = data.hourly?.pm10 || [];
     }
 
-    let temp = 19;
-    let humidity = 70;
+    let temp = 17.5;
+    let humidity = 80;
     let windSpeed = 3.0;
+    let surfacePressure = 1017;
+    let visibilityKm = 16;
+    let sunrise = "06:12";
+    let sunset = "16:58";
     let hourlyTemp: number[] = [];
     let hourlyHumidity: number[] = [];
     let hourlyWind: number[] = [];
 
     if (weatherRes.status === "fulfilled" && weatherRes.value.ok) {
       const wData = await weatherRes.value.json();
-      temp = Number(wData.current?.temperature_2m ?? 19);
-      humidity = Number(wData.current?.relative_humidity_2m ?? 70);
+      temp = Number(wData.current?.temperature_2m ?? 17.5);
+      humidity = Number(wData.current?.relative_humidity_2m ?? 80);
       windSpeed = Number(wData.current?.wind_speed_10m ?? 3.0);
+      surfacePressure = Number(wData.current?.surface_pressure ? Math.round(wData.current.surface_pressure) : 1017);
+      visibilityKm = Number(wData.current?.visibility ? Math.round((wData.current.visibility / 1000) * 10) / 10 : 16);
+      if (wData.daily?.sunrise?.[0]) {
+        sunrise = wData.daily.sunrise[0].split("T")[1]?.slice(0, 5) || "06:12";
+      }
+      if (wData.daily?.sunset?.[0]) {
+        sunset = wData.daily.sunset[0].split("T")[1]?.slice(0, 5) || "16:58";
+      }
       hourlyTemp = wData.hourly?.temperature_2m || [];
       hourlyHumidity = wData.hourly?.relative_humidity_2m || [];
       hourlyWind = wData.hourly?.wind_speed_10m || [];
     }
 
-    const { aqi, category } = calculateAQIFromPM25(currentPm25);
+    const { cpcbAqi, cpcbCategory, epaAqi, epaCategory } = calculateBothAQI(currentPm25);
 
     // Primary pollutant detection: Compare PM2.5 vs PM10 vs NO2
     let primaryPollutant: 'PM2.5' | 'PM10' | 'NO2' = "PM2.5";
@@ -281,7 +367,7 @@ export async function fetchLiveAQI(lat: number, lon: number): Promise<AQIData> {
       const hourNum = parseInt(hourPart.split(":")[0]);
       const hourInversion = valWind < 6.0 && valTemp < 23 && (hourNum < 11 || hourNum > 17);
 
-      const calculated = calculateAQIFromPM25(valPm25);
+      const both = calculateBothAQI(valPm25);
 
       let condition = "Moderate dispersion";
       let recommendation = "Standard clean air precautions.";
@@ -305,8 +391,10 @@ export async function fetchLiveAQI(lat: number, lon: number): Promise<AQIData> {
 
       forecastHourly.push({
         hour: hourPart,
-        aqi: calculated.aqi,
-        category: calculated.category,
+        aqi: both.cpcbAqi,
+        cpcbAqi: both.cpcbAqi,
+        epaAqi: both.epaAqi,
+        category: both.cpcbCategory,
         pm25: valPm25,
         pm10: valPm10,
         temperature: valTemp,
@@ -321,7 +409,7 @@ export async function fetchLiveAQI(lat: number, lon: number): Promise<AQIData> {
     // Determine the minimum PM2.5 window for safe outdoor/ventilation
     let bestWindowStart = "13:30";
     let bestWindowEnd = "15:30";
-    let bestAqi = Math.max(80, Math.round(aqi * 0.7));
+    let bestAqi = Math.max(80, Math.round(cpcbAqi * 0.7));
 
     if (forecastHourly.length >= 6) {
       let minVal = Infinity;
@@ -334,7 +422,7 @@ export async function fetchLiveAQI(lat: number, lon: number): Promise<AQIData> {
         }
       });
       if (minVal !== Infinity) {
-        bestAqi = calculateAQIFromPM25(minVal).aqi;
+        bestAqi = calculateBothAQI(minVal).cpcbAqi;
         const h = parseInt(minHour.split(":")[0]);
         bestWindowStart = `${String(h).padStart(2, "0")}:00`;
         bestWindowEnd = `${String(h + 2).padStart(2, "0")}:00`;
@@ -342,17 +430,24 @@ export async function fetchLiveAQI(lat: number, lon: number): Promise<AQIData> {
     }
 
     return {
-      aqi,
-      category,
+      aqi: cpcbAqi,
+      cpcbAqi,
+      epaAqi,
+      category: cpcbCategory,
       primaryPollutant,
       pm25: Math.round(currentPm25),
       pm10: Math.round(currentPm10),
       no2,
       co,
       o3,
+      so2,
       temperature: Math.round(temp * 10) / 10,
       humidity: Math.round(humidity),
       windSpeed: Math.round(windSpeed * 10) / 10,
+      surfacePressure,
+      visibilityKm,
+      sunrise,
+      sunset,
       temperatureInversion,
       forecastHourly: forecastHourly.length > 0 ? forecastHourly : FALLBACK_AQI_DATA.forecastHourly,
       safeOutdoorWindows: [
@@ -373,4 +468,44 @@ export async function fetchLiveAQI(lat: number, lon: number): Promise<AQIData> {
       isFallback: true
     };
   }
+}
+
+/**
+ * Calibrate AQIData with a manual ground sensor reading or mobile reading
+ */
+export function calibrateAQIData(
+  base: AQIData,
+  manualPm25: number,
+  standard: AQIStandard = 'cpcb',
+  note: string = "Calibrated to handheld / mobile app sensor"
+): AQIData {
+  const { cpcbAqi, cpcbCategory, epaAqi, epaCategory } = calculateBothAQI(manualPm25);
+  const selectedAqi = standard === 'epa' ? epaAqi : cpcbAqi;
+  const selectedCat = standard === 'epa' ? epaCategory : cpcbCategory;
+  const ratio = (base.pm25 > 0 ? manualPm25 / base.pm25 : 1);
+
+  const calibratedHourly = (base.forecastHourly || []).map(f => {
+    const adjustedPm25 = Math.max(1, Math.round(f.pm25 * ratio));
+    const both = calculateBothAQI(adjustedPm25);
+    return {
+      ...f,
+      pm25: adjustedPm25,
+      cpcbAqi: both.cpcbAqi,
+      epaAqi: both.epaAqi,
+      aqi: standard === 'epa' ? both.epaAqi : both.cpcbAqi,
+      category: standard === 'epa' ? both.epaCategory : both.cpcbCategory
+    };
+  });
+
+  return {
+    ...base,
+    pm25: manualPm25,
+    cpcbAqi,
+    epaAqi,
+    aqi: selectedAqi,
+    category: selectedCat,
+    forecastHourly: calibratedHourly,
+    isCalibrated: true,
+    calibratedNote: note
+  };
 }

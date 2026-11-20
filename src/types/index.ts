@@ -42,9 +42,13 @@ export type AQICategory =
   | 'Very Unhealthy' 
   | 'Hazardous';
 
+export type AQIStandard = 'cpcb' | 'epa';
+
 export interface HourlyForecastItem {
   hour: string;
   aqi: number;
+  cpcbAqi?: number;
+  epaAqi?: number;
   category: AQICategory;
   pm25: number;
   pm10?: number;
@@ -58,6 +62,8 @@ export interface HourlyForecastItem {
 
 export interface AQIData {
   aqi: number;
+  cpcbAqi?: number;
+  epaAqi?: number;
   category: AQICategory;
   primaryPollutant: 'PM2.5' | 'PM10' | 'NO2' | 'O3' | 'SO2' | 'CO';
   pm25: number;
@@ -65,9 +71,14 @@ export interface AQIData {
   no2?: number;
   co?: number;
   o3?: number;
+  so2?: number;
   temperature: number;
   humidity: number;
   windSpeed: number;
+  surfacePressure?: number;
+  visibilityKm?: number;
+  sunrise?: string;
+  sunset?: string;
   temperatureInversion: boolean;
   forecastHourly: HourlyForecastItem[];
   safeOutdoorWindows: Array<{
@@ -84,6 +95,8 @@ export interface AQIData {
   timestamp: string;
   source: string;
   isFallback: boolean;
+  isCalibrated?: boolean;
+  calibratedNote?: string;
 }
 
 export interface MemberRiskAssessment {

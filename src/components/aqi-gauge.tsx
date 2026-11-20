@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { AQIData, HourlyForecastItem } from "@/types";
+import { useApp } from "@/context/app-context";
 import { 
   Wind, 
   Droplets, 
@@ -11,7 +12,16 @@ import {
   Sparkles, 
   RotateCcw,
   Sliders,
-  Calendar
+  Calendar,
+  HelpCircle,
+  X,
+  Check,
+  Eye,
+  Gauge,
+  Sunrise,
+  Sunset,
+  ShieldCheck,
+  Info
 } from "lucide-react";
 
 interface AqiGaugeProps {
@@ -21,14 +31,22 @@ interface AqiGaugeProps {
 }
 
 export function AqiGauge({ data, language = 'en', onOpenLocationSelector }: AqiGaugeProps) {
+  const { aqiStandard, setAqiStandard, manualPm25, calibrateSensor } = useApp();
   const isHi = language === 'hi';
   const [selectedHourIndex, setSelectedHourIndex] = useState<number | null>(null);
+  const [showInfoModal, setShowInfoModal] = useState(false);
+  const [showCalibrateModal, setShowCalibrateModal] = useState(false);
+  const [customPmInput, setCustomPmInput] = useState<string>(String(data.pm25 || 182));
 
   // Determine which data point to display (Live current vs Selected hour)
   const isTimeTraveling = selectedHourIndex !== null && data.forecastHourly && data.forecastHourly[selectedHourIndex];
   const activeHourlyItem = isTimeTraveling ? data.forecastHourly[selectedHourIndex] : null;
 
-  const displayAqi = activeHourlyItem ? activeHourlyItem.aqi : data.aqi;
+  // Dual standard active AQI
+  const displayAqi = activeHourlyItem
+    ? (aqiStandard === 'epa' ? (activeHourlyItem.epaAqi ?? activeHourlyItem.aqi) : (activeHourlyItem.cpcbAqi ?? activeHourlyItem.aqi))
+    : (aqiStandard === 'epa' ? (data.epaAqi ?? data.aqi) : (data.cpcbAqi ?? data.aqi));
+
   const displayPm25 = activeHourlyItem ? activeHourlyItem.pm25 : data.pm25;
   const displayPm10 = activeHourlyItem ? (activeHourlyItem.pm10 ?? Math.round(activeHourlyItem.pm25 * 1.5)) : data.pm10;
   const displayTemp = activeHourlyItem?.temperature !== undefined ? activeHourlyItem.temperature : data.temperature;
@@ -43,7 +61,7 @@ export function AqiGauge({ data, language = 'en', onOpenLocationSelector }: AqiG
   const getTheme = (aqiVal: number) => {
     if (aqiVal <= 50) {
       return {
-        label: isHi ? "अच्छा" : "Good",
+        label: isHi ? "अच्छा (Good)" : "Good",
         color: "#10b981",
         textColor: "text-emerald-400",
         bgColor: "bg-emerald-500/10",
@@ -52,7 +70,7 @@ export function AqiGauge({ data, language = 'en', onOpenLocationSelector }: AqiG
       };
     } else if (aqiVal <= 100) {
       return {
-        label: isHi ? "मध्यम" : "Moderate",
+        label: isHi ? "मध्यम (Moderate)" : "Moderate",
         color: "#f59e0b",
         textColor: "text-amber-400",
         bgColor: "bg-amber-500/10",
@@ -70,7 +88,7 @@ export function AqiGauge({ data, language = 'en', onOpenLocationSelector }: AqiG
       };
     } else if (aqiVal <= 300) {
       return {
-        label: isHi ? "अस्वस्थ" : "Unhealthy",
+        label: isHi ? "अस्वस्थ (Unhealthy)" : "Unhealthy",
         color: "#ef4444",
         textColor: "text-red-400",
         bgColor: "bg-red-500/10",
@@ -79,7 +97,7 @@ export function AqiGauge({ data, language = 'en', onOpenLocationSelector }: AqiG
       };
     } else if (aqiVal <= 400) {
       return {
-        label: isHi ? "अत्यधिक अस्वस्थ" : "Very Unhealthy",
+        label: isHi ? "अत्यधिक अस्वस्थ (Very Unhealthy)" : "Very Unhealthy",
         color: "#8b5cf6",
         textColor: "text-purple-400",
         bgColor: "bg-purple-500/10",
@@ -88,7 +106,7 @@ export function AqiGauge({ data, language = 'en', onOpenLocationSelector }: AqiG
       };
     } else {
       return {
-        label: isHi ? "अति गंभीर / खतरनाक" : "Hazardous / Severe+",
+        label: isHi ? "अति गंभीर / खतरनाक (Hazardous)" : "Hazardous / Severe+",
         color: "#e11d48",
         textColor: "text-rose-400",
         bgColor: "bg-rose-950/40",
@@ -99,9 +117,22 @@ export function AqiGauge({ data, language = 'en', onOpenLocationSelector }: AqiG
   };
 
   const theme = getTheme(displayAqi);
-
-  // Gauge calculation (0 to 500 mapped to 0 to 180 degrees)
   const clampedAqi = Math.min(500, Math.max(0, displayAqi));
+
+  const handleApplyCalibration = (e: React.FormEvent) => {
+    e.preventDefault();
+    const val = parseFloat(customPmInput);
+    if (!isNaN(val) && val >= 0) {
+      calibrateSensor(val, `Calibrated to user sensor (${val} µg/m³)`);
+      setShowCalibrateModal(false);
+    }
+  };
+
+  const handleResetCalibration = () => {
+    calibrateSensor(null);
+    setCustomPmInput(String(data.pm25));
+    setShowCalibrateModal(false);
+  };
 
   return (
     <div className="bg-surface-card border border-surface-border rounded-2xl p-5 shadow-xl relative overflow-hidden space-y-4">
@@ -116,11 +147,17 @@ export function AqiGauge({ data, language = 'en', onOpenLocationSelector }: AqiG
         <div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold uppercase tracking-wider text-slate-400">
-              {isTimeTraveling ? (isHi ? `समय: ${displayHourLabel}` : `Selected Hour: ${displayHourLabel}`) : (isHi ? "वर्तमान वायु गुणवत्ता सूचकांक" : "Live Air Quality Index")}
+              {isTimeTraveling ? (isHi ? `समय: ${displayHourLabel}` : `Selected Hour: ${displayHourLabel}`) : (isHi ? "वायु गुणवत्ता सूचकांक" : "Air Quality Index")}
             </span>
             {isTimeTraveling && (
               <span className="text-[10px] bg-cyan-950 border border-cyan-800 text-cyan-300 px-2 py-0.5 rounded-full font-mono font-bold">
                 Time-Travel
+              </span>
+            )}
+            {data.isCalibrated && (
+              <span className="text-[10px] bg-amber-950 border border-amber-800 text-amber-300 px-2 py-0.5 rounded-full font-mono font-semibold flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3" />
+                Phone Calibrated
               </span>
             )}
           </div>
@@ -145,6 +182,59 @@ export function AqiGauge({ data, language = 'en', onOpenLocationSelector }: AqiG
               Live Synced
             </span>
           )}
+        </div>
+      </div>
+
+      {/* Dual Standard Switcher & Info Controls */}
+      <div className="flex items-center justify-between flex-wrap gap-2 pt-1 border-b border-surface-border/60 pb-3">
+        {/* Toggle between CPCB India and US EPA / AccuWeather */}
+        <div className="flex items-center gap-1 bg-slate-900/90 p-1 rounded-xl border border-slate-800">
+          <button
+            onClick={() => setAqiStandard("cpcb")}
+            className={`px-3 py-1 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
+              aqiStandard === "cpcb"
+                ? "bg-cyan-600 text-white shadow-md shadow-cyan-950"
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            <span>🇮🇳 India CPCB</span>
+            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-black/30">
+              {activeHourlyItem ? (activeHourlyItem.cpcbAqi ?? activeHourlyItem.aqi) : (data.cpcbAqi ?? data.aqi)}
+            </span>
+          </button>
+          <button
+            onClick={() => setAqiStandard("epa")}
+            className={`px-3 py-1 rounded-lg text-xs font-semibold transition flex items-center gap-1.5 ${
+              aqiStandard === "epa"
+                ? "bg-cyan-600 text-white shadow-md shadow-cyan-950"
+                : "text-slate-400 hover:text-white"
+            }`}
+          >
+            <span>🇺🇸 US EPA / AccuWeather</span>
+            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-black/30">
+              {activeHourlyItem ? (activeHourlyItem.epaAqi ?? activeHourlyItem.aqi) : (data.epaAqi ?? data.aqi)}
+            </span>
+          </button>
+        </div>
+
+        {/* Explain / Calibrate buttons */}
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setShowInfoModal(true)}
+            className="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-cyan-400 text-xs font-medium flex items-center gap-1.5 transition"
+            title="Learn why phone apps show 182 while CPCB shows 335"
+          >
+            <HelpCircle className="w-3.5 h-3.5" />
+            <span>{isHi ? "फ़ोन में 182 क्यों?" : "Why phone says 182?"}</span>
+          </button>
+
+          <button
+            onClick={() => setShowCalibrateModal(true)}
+            className="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-amber-400 text-xs font-medium flex items-center gap-1.5 transition"
+          >
+            <Sliders className="w-3.5 h-3.5" />
+            <span>{data.isCalibrated ? (isHi ? "कैलिब्रेटेड" : "Calibrated") : (isHi ? "फ़ोन सिंक" : "Sync Phone")}</span>
+          </button>
         </div>
       </div>
 
@@ -176,7 +266,7 @@ export function AqiGauge({ data, language = 'en', onOpenLocationSelector }: AqiG
               {displayAqi}
             </span>
             <span className="text-xs font-semibold text-slate-400 block -mt-1">
-              AQI · {displayHourLabel}
+              {aqiStandard === "epa" ? "US EPA Scale" : "CPCB India Scale"} · {displayHourLabel}
             </span>
           </div>
         </div>
@@ -184,6 +274,15 @@ export function AqiGauge({ data, language = 'en', onOpenLocationSelector }: AqiG
         <p className="text-xs text-slate-300 text-center max-w-sm mt-3 px-2">
           {theme.desc}
         </p>
+
+        {/* Quick comparison pill */}
+        <div className="mt-2 text-[11px] text-slate-400 bg-slate-900/80 border border-slate-800 px-3 py-1 rounded-full flex items-center gap-2">
+          <span>🇮🇳 CPCB: <strong className="text-white">{data.cpcbAqi ?? data.aqi}</strong></span>
+          <span className="text-slate-600">|</span>
+          <span>🇺🇸 EPA/AccuWeather: <strong className="text-white">{data.epaAqi ?? data.aqi}</strong></span>
+          <span className="text-slate-600">|</span>
+          <span>PM2.5: <strong className="text-cyan-300">{displayPm25} µg/m³</strong></span>
+        </div>
       </div>
 
       {/* Time-Specific Atmospheric Inversion / Condition Banner */}
@@ -213,22 +312,81 @@ export function AqiGauge({ data, language = 'en', onOpenLocationSelector }: AqiG
         </div>
       ) : null}
 
-      {/* Key Pollutants & Weather Telemetry Grid */}
-      <div className="grid grid-cols-3 gap-2 pt-2 border-t border-surface-border">
-        <div className="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800 text-center">
-          <span className="text-[10px] text-slate-400 uppercase font-semibold block">PM2.5 (Fine)</span>
-          <span className="text-base font-bold text-white font-mono">{displayPm25}</span>
-          <span className="text-[10px] text-slate-400 block">µg/m³</span>
+      {/* COMPLETE TELEMETRY GRID: Matching User's Mobile App */}
+      <div className="space-y-2 pt-2 border-t border-surface-border">
+        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider block">
+          {isHi ? "प्रदूषक व मौसम टेलीमेट्री (Live Pollutants & Telemetry)" : "Live Telemetry & Atmospheric Metrics"}
+        </span>
+
+        {/* Row 1: Key Pollutants */}
+        <div className="grid grid-cols-4 gap-2">
+          <div className="bg-slate-900/70 p-2 rounded-xl border border-slate-800 text-center">
+            <span className="text-[9px] text-pink-400 font-bold uppercase block">PM2.5</span>
+            <span className="text-sm sm:text-base font-extrabold text-white font-mono">{displayPm25}</span>
+            <span className="text-[9px] text-slate-500 block">µg/m³</span>
+          </div>
+          <div className="bg-slate-900/70 p-2 rounded-xl border border-slate-800 text-center">
+            <span className="text-[9px] text-amber-400 font-bold uppercase block">PM10</span>
+            <span className="text-sm sm:text-base font-extrabold text-slate-200 font-mono">{displayPm10}</span>
+            <span className="text-[9px] text-slate-500 block">µg/m³</span>
+          </div>
+          <div className="bg-slate-900/70 p-2 rounded-xl border border-slate-800 text-center">
+            <span className="text-[9px] text-orange-400 font-bold uppercase block">CO</span>
+            <span className="text-sm sm:text-base font-extrabold text-slate-200 font-mono">{data.co ?? 8}</span>
+            <span className="text-[9px] text-slate-500 block">mg/m³</span>
+          </div>
+          <div className="bg-slate-900/70 p-2 rounded-xl border border-slate-800 text-center">
+            <span className="text-[9px] text-emerald-400 font-bold uppercase block">SO2</span>
+            <span className="text-sm sm:text-base font-extrabold text-slate-200 font-mono">{data.so2 ?? 13}</span>
+            <span className="text-[9px] text-slate-500 block">µg/m³</span>
+          </div>
         </div>
-        <div className="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800 text-center">
-          <span className="text-[10px] text-slate-400 uppercase font-semibold block">PM10 (Coarse)</span>
-          <span className="text-base font-bold text-slate-200 font-mono">{displayPm10}</span>
-          <span className="text-[10px] text-slate-400 block">µg/m³</span>
+
+        {/* Row 2: Weather, Atmospheric Pressure & Visibility (Matches HuaFeng Phone View) */}
+        <div className="grid grid-cols-4 gap-2">
+          <div className="bg-slate-900/70 p-2 rounded-xl border border-slate-800 text-center">
+            <span className="text-[9px] text-slate-400 font-semibold uppercase block flex items-center justify-center gap-1">
+              <Thermometer className="w-2.5 h-2.5 text-cyan-400" /> Temp
+            </span>
+            <span className="text-xs sm:text-sm font-bold text-white font-mono">{displayTemp}°C</span>
+            <span className="text-[9px] text-slate-500 block">Ambient</span>
+          </div>
+          <div className="bg-slate-900/70 p-2 rounded-xl border border-slate-800 text-center">
+            <span className="text-[9px] text-slate-400 font-semibold uppercase block flex items-center justify-center gap-1">
+              <Droplets className="w-2.5 h-2.5 text-blue-400" /> Humidity
+            </span>
+            <span className="text-xs sm:text-sm font-bold text-white font-mono">{displayHumidity}%</span>
+            <span className="text-[9px] text-slate-500 block">RH</span>
+          </div>
+          <div className="bg-slate-900/70 p-2 rounded-xl border border-slate-800 text-center">
+            <span className="text-[9px] text-slate-400 font-semibold uppercase block flex items-center justify-center gap-1">
+              <Eye className="w-2.5 h-2.5 text-slate-400" /> Visibility
+            </span>
+            <span className="text-xs sm:text-sm font-bold text-white font-mono">{data.visibilityKm ?? 16}</span>
+            <span className="text-[9px] text-slate-500 block">km</span>
+          </div>
+          <div className="bg-slate-900/70 p-2 rounded-xl border border-slate-800 text-center">
+            <span className="text-[9px] text-slate-400 font-semibold uppercase block flex items-center justify-center gap-1">
+              <Gauge className="w-2.5 h-2.5 text-slate-400" /> Pressure
+            </span>
+            <span className="text-xs sm:text-sm font-bold text-white font-mono">{data.surfacePressure ?? 1017}</span>
+            <span className="text-[9px] text-slate-500 block">hPa</span>
+          </div>
         </div>
-        <div className="bg-slate-900/60 p-2.5 rounded-xl border border-slate-800 text-center">
-          <span className="text-[10px] text-slate-400 uppercase font-semibold block">Weather & Wind</span>
-          <span className="text-base font-bold text-cyan-300 font-mono">{displayWind}</span>
-          <span className="text-[10px] text-slate-400 block">km/h · {displayTemp}°C</span>
+
+        {/* Row 3: Sun arc times */}
+        <div className="flex items-center justify-between bg-slate-900/40 border border-slate-800/80 px-3 py-1.5 rounded-xl text-xs text-slate-300">
+          <div className="flex items-center gap-1.5">
+            <Sunrise className="w-3.5 h-3.5 text-amber-400" />
+            <span>Sunrise: <strong className="text-white font-mono">{data.sunrise ?? "06:12"}</strong></span>
+          </div>
+          <div className="text-slate-500 font-mono text-[10px]">
+            Wind: {displayWind} km/h
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Sunset className="w-3.5 h-3.5 text-orange-400" />
+            <span>Sunset: <strong className="text-white font-mono">{data.sunset ?? "16:58"}</strong></span>
+          </div>
         </div>
       </div>
 
@@ -237,7 +395,7 @@ export function AqiGauge({ data, language = 'en', onOpenLocationSelector }: AqiG
         <div className="flex items-center justify-between">
           <span className="text-xs font-bold text-slate-300 flex items-center gap-1.5 uppercase tracking-wider">
             <Clock className="w-3.5 h-3.5 text-cyan-400" />
-            {isHi ? "दिन के समय के अनुसार AQI स्तर देखें (Hourly Time-Scrubber):" : "AQI Level by Time of Day (24-Hour Scrubber):"}
+            {isHi ? "दिन के समय के अनुसार AQI स्तर देखें (24-Hour Scrubber):" : "AQI Level by Time of Day (24-Hour Scrubber):"}
           </span>
           {isTimeTraveling && (
             <button
@@ -267,7 +425,8 @@ export function AqiGauge({ data, language = 'en', onOpenLocationSelector }: AqiG
           {/* Hourly Points */}
           {data.forecastHourly?.map((f, idx) => {
             const isSelected = selectedHourIndex === idx;
-            const hourTheme = getTheme(f.aqi);
+            const hourAqi = aqiStandard === 'epa' ? (f.epaAqi ?? f.aqi) : (f.cpcbAqi ?? f.aqi);
+            const hourTheme = getTheme(hourAqi);
             return (
               <button
                 key={idx}
@@ -283,7 +442,7 @@ export function AqiGauge({ data, language = 'en', onOpenLocationSelector }: AqiG
                   className="text-xs font-bold font-mono block mt-0.5"
                   style={{ color: hourTheme.color }}
                 >
-                  {f.aqi}
+                  {hourAqi}
                 </span>
                 <span className="text-[9px] text-slate-500 block">
                   {f.pm25} µg
@@ -309,6 +468,191 @@ export function AqiGauge({ data, language = 'en', onOpenLocationSelector }: AqiG
           <span className="text-[10px] bg-cyan-900/60 text-cyan-300 px-2 py-0.5 rounded-full font-semibold">
             {isHi ? "दैनिक न्यूनतम" : "Solar Peak"}
           </span>
+        </div>
+      )}
+
+      {/* POPUP MODAL 1: Why phone says 182 vs CPCB 335 / 348 */}
+      {showInfoModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-surface-card border border-surface-border rounded-2xl p-5 max-w-lg w-full shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto scrollbar-thin">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-cyan-500/10 text-cyan-400">
+                  <Info className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">
+                    {isHi ? "फ़ोन में 182 और यहाँ 335 क्यों दिख रहा है?" : "Why Phone Shows 182 and CPCB Shows 335 / 348"}
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Scientific breakdown of AQI calculation scales
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowInfoModal(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs text-slate-300 leading-relaxed">
+              <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1.5">
+                <div className="font-bold text-amber-300 flex items-center gap-1.5">
+                  <span>📱 Phone Weather App (HuaFeng / AccuWeather / US EPA Scale)</span>
+                </div>
+                <p>
+                  Most mobile weather apps (Xiaomi, Vivo, Oppo, Apple) use the <strong>US EPA Global AQI index</strong> or directly show the <strong>PM2.5 concentration (182 µg/m³)</strong> as the AQI score.
+                </p>
+                <p className="font-mono text-cyan-300">
+                  PM2.5 = 182 µg/m³ ➔ EPA AQI = 182 - 232 ("Very Unhealthy")
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-slate-900/90 border border-slate-800 space-y-1.5">
+                <div className="font-bold text-cyan-300 flex items-center gap-1.5">
+                  <span>🇮🇳 Central Pollution Control Board (CPCB India NAQI)</span>
+                </div>
+                <p>
+                  India's official National AQI scale uses strict linear interpolation across 6 health bands. For PM2.5 between 121 and 250 µg/m³:
+                </p>
+                <p className="font-mono text-emerald-300 bg-slate-950 p-2 rounded">
+                  AQI = 301 + [(400 - 301) / (250 - 120)] × (PM2.5 - 120)<br />
+                  For PM2.5 = 165 µg/m³ ➔ AQI = 335<br />
+                  For PM2.5 = 182 µg/m³ ➔ AQI = 348 ("Very Poor")
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-200">
+                <strong className="block text-emerald-300 mb-1">Conclusion:</strong>
+                Both numbers describe the <strong>exact same air</strong>! Your phone reports 182 using the US EPA / direct concentration scale, while Indian government monitoring reports 335–348 using the National AQI scale.
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-surface-border">
+              <button
+                onClick={() => {
+                  setAqiStandard("epa");
+                  setShowInfoModal(false);
+                }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition ${
+                  aqiStandard === "epa" ? "bg-cyan-600 text-white border-cyan-500" : "bg-slate-900 text-slate-300 border-slate-800"
+                }`}
+              >
+                Use US EPA (182)
+              </button>
+              <button
+                onClick={() => {
+                  setAqiStandard("cpcb");
+                  setShowInfoModal(false);
+                }}
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold border transition ${
+                  aqiStandard === "cpcb" ? "bg-cyan-600 text-white border-cyan-500" : "bg-slate-900 text-slate-300 border-slate-800"
+                }`}
+              >
+                Use India CPCB (335)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* POPUP MODAL 2: Sensor / Phone Calibration */}
+      {showCalibrateModal && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-surface-card border border-surface-border rounded-2xl p-5 max-w-md w-full shadow-2xl space-y-4">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400">
+                  <Sliders className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-white">
+                    {isHi ? "फ़ोन या सेंसर रीडिंग से सिंक करें" : "Sync Handheld Sensor / Phone"}
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Calibrate all SmogShield calculations to your exact reading
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowCalibrateModal(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleApplyCalibration} className="space-y-3">
+              <div>
+                <label className="text-xs font-semibold text-slate-300 block mb-1">
+                  Enter PM2.5 Reading (µg/m³) from your phone / handheld monitor:
+                </label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="999"
+                    value={customPmInput}
+                    onChange={(e) => setCustomPmInput(e.target.value)}
+                    placeholder="e.g. 182"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-white font-mono focus:outline-none focus:border-cyan-500"
+                  />
+                  <span className="absolute right-3 top-2 text-xs text-slate-400">µg/m³</span>
+                </div>
+              </div>
+
+              {/* Quick pre-fill buttons */}
+              <div className="flex items-center gap-2">
+                <span className="text-[11px] text-slate-400">Quick fill:</span>
+                <button
+                  type="button"
+                  onClick={() => setCustomPmInput("182")}
+                  className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs text-pink-300 font-mono"
+                >
+                  182 (Patna Mobile)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCustomPmInput("164")}
+                  className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-mono"
+                >
+                  164
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setCustomPmInput("75")}
+                  className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-xs text-slate-300 font-mono"
+                >
+                  75
+                </button>
+              </div>
+
+              <p className="text-[11px] text-slate-400">
+                SmogShield will instantly recalculate both Indian CPCB and US EPA AQI, mask recommendations, indoor purifier requirements, and health impact for your household.
+              </p>
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-surface-border">
+                {data.isCalibrated && (
+                  <button
+                    type="button"
+                    onClick={handleResetCalibration}
+                    className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 text-slate-300 hover:text-white"
+                  >
+                    Reset to Live API
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  className="px-4 py-1.5 rounded-xl text-xs font-semibold bg-cyan-600 hover:bg-cyan-500 text-white shadow-md shadow-cyan-950 transition"
+                >
+                  Apply Calibration
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

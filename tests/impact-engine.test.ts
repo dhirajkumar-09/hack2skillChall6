@@ -31,6 +31,25 @@ describe("Impact Engine - Deterministic Calculations", () => {
     expect(severe.aqi).toBeGreaterThanOrEqual(400);
   });
 
+  it("accurately computes dual standard AQI for India CPCB NAQI vs US EPA / AccuWeather", () => {
+    // Patna Mobile Screen test: PM2.5 = 182 µg/m³
+    const cpcbPatna = calculateAQIFromPM25(182, "cpcb");
+    const epaPatna = calculateAQIFromPM25(182, "epa");
+
+    // India CPCB NAQI: 301 + (99/130)*(182 - 120) = 348
+    expect(cpcbPatna.aqi).toBe(348);
+    expect(cpcbPatna.cpcbAqi).toBe(348);
+    expect(cpcbPatna.category).toBe("Very Unhealthy");
+
+    // US EPA: 150.5 to 250.4 range -> 201 to 300 AQI bracket
+    expect(epaPatna.epaAqi).toBe(232);
+    expect(epaPatna.category).toBe("Very Unhealthy");
+
+    // Delhi reading test: PM2.5 = 164.4 µg/m³ gives CPCB AQI 335
+    const delhiAqi = calculateAQIFromPM25(164.4, "cpcb");
+    expect(delhiAqi.aqi).toBe(335);
+  });
+
   it("calculates member inhalation exposure and Berkeley Earth cigarette equivalence", () => {
     const toddler: HouseholdMember = {
       id: "t_1",

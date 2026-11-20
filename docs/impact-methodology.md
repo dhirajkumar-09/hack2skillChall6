@@ -100,7 +100,44 @@ Based on **CPCB Urban Transport Emission Factors (2022)** and **IPCC Guidelines 
 
 ---
 
-## 6. Peer-Reviewed References
+## 6. Dual AQI Calculation Standards: India CPCB vs US EPA / AccuWeather
+
+A frequent question from users in Indian cities is:
+> *"Why does my mobile weather app (e.g. HuaFeng AccuWeather on Xiaomi/Vivo/Samsung) show an AQI of 182, while SmogShield and CPCB monitoring stations report an AQI of 335 to 348 for Patna?"*
+
+### 6.1 The Mathematical Reason
+Both numbers are derived from the **exact same air and identical PM2.5 particulate mass**:
+
+1. **HuaFeng AccuWeather (US EPA Global Standard / Raw PM2.5 Index):**
+   - Most smartphone OEM vendor weather engines report using the US EPA scale or display the raw PM2.5 particulate mass directly ($182\ \mu\text{g}/\text{m}^3$).
+   - On the US EPA breakpoint scale:
+     - $150.5 - 250.4\ \mu\text{g}/\text{m}^3 \rightarrow \text{AQI } 201 - 300$ ("Very Unhealthy", marked with pink/purple).
+     - At $182\ \mu\text{g}/\text{m}^3$, the US EPA index is $232$, and OEM apps directly feature the $182\ \mu\text{g}/\text{m}^3$ primary pollutant score.
+
+2. **India CPCB (National Air Quality Index - NAQI):**
+   - Established by the Central Pollution Control Board (MoEFCC, Government of India), the Indian NAQI uses 6 health categories calibrated to Indian urban exposure:
+     - $0 - 30\ \mu\text{g}/\text{m}^3 \rightarrow 0 - 50$ (Good)
+     - $31 - 60\ \mu\text{g}/\text{m}^3 \rightarrow 51 - 100$ (Satisfactory)
+     - $61 - 90\ \mu\text{g}/\text{m}^3 \rightarrow 101 - 200$ (Moderate)
+     - $91 - 120\ \mu\text{g}/\text{m}^3 \rightarrow 201 - 300$ (Poor)
+     - $121 - 250\ \mu\text{g}/\text{m}^3 \rightarrow 301 - 400$ (Very Poor)
+     - $250+\ \mu\text{g}/\text{m}^3 \rightarrow 401 - 500$ (Severe / Hazardous)
+   - Indian Linear Interpolation Formula:
+     $$\text{AQI} = 301 + \left( \frac{400 - 301}{250 - 120} \right) \times (\text{PM}_{2.5} - 120) = 301 + \frac{99}{130} \times (\text{PM}_{2.5} - 120)$$
+   - At $\text{PM}_{2.5} = 164.4\ \mu\text{g}/\text{m}^3$:
+     $$\text{AQI} = 301 + 0.7615 \times 44.4 \approx \mathbf{335}\ \text{("Very Poor")}$$
+   - At $\text{PM}_{2.5} = 182\ \mu\text{g}/\text{m}^3$:
+     $$\text{AQI} = 301 + 0.7615 \times 62 \approx \mathbf{348}\ \text{("Very Poor")}$$
+
+### 6.2 SmogShield's Transparent Resolution
+SmogShield solves this discrepancy by providing:
+1. **Interactive Dual-Standard Toggle:** Users can switch between **🇮🇳 India CPCB** and **🇺🇸 US EPA / AccuWeather** with one click.
+2. **Side-by-Side Comparison Pill:** Displays CPCB, EPA, and raw PM2.5 ($\mu\text{g}/\text{m}^3$) simultaneously.
+3. **Handheld / Phone Sensor Sync:** Allows entering the exact local reading (e.g. $182\ \mu\text{g}/\text{m}^3$) to calibrate all indoor purifier CADR, N95 respirator advice, and exposure calculations to the user's specific handheld or phone monitor.
+
+---
+
+## 7. Peer-Reviewed References
 
 1. **World Health Organization (2021).** *WHO Global Air Quality Guidelines: Particulate matter (PM2.5 and PM10), ozone, nitrogen dioxide, sulfur dioxide and carbon monoxide.* Geneva: World Health Organization.
 2. **Muller, R., Muller, E., & Rohde, R. (2015).** *Air Pollution and Cigarette Equivalence: A Quantitative Health Communication Model.* Berkeley Earth.
