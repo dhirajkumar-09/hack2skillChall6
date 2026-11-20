@@ -198,11 +198,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const selectPersona = (personaKey: string) => {
     const p = DEMO_PERSONAS[personaKey];
     if (p) {
-      setProfile(p);
-      setLanguageState(p.language);
+      // Retain the user's active UI language preference
+      const updatedProfile = { ...p, language };
+      setProfile(updatedProfile);
       try {
-        localStorage.setItem("smogshield_profile", JSON.stringify(p));
-        localStorage.setItem("smogshield_lang", p.language);
+        localStorage.setItem("smogshield_profile", JSON.stringify(updatedProfile));
       } catch {}
     }
   };

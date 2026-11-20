@@ -109,7 +109,7 @@ export const DEMO_PERSONAS: Record<string, UserProfile> = {
     commuteDurationMinutes: 15,
     budgetLevel: "low_frugal",
     hasAirPurifier: false,
-    language: "hi"
+    language: "en"
   }
 };
 
