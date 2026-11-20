@@ -5,6 +5,15 @@
 
 ---
 
+## 🚀 Live Demo & Deployment
+
+- **Live URL:** [https://hack2skillchallenge6.vercel.app/](https://hack2skillchallenge6.vercel.app/)
+- **GitHub Repository:** [https://github.com/dhirajkumar-09/hack2skillChall6](https://github.com/dhirajkumar-09/hack2skillChall6)
+
+> **Note on Vercel Deployment:** If deploying via Vercel, ensure the `GEMINI_API_KEY` is added to your Vercel Project Settings under **Environment Variables**. When new commits are pushed, Vercel will trigger a deployment or you can click **Redeploy** from the Vercel Dashboard deployments tab.
+
+---
+
 ## 🌟 Key Capabilities & Features
 
 ### 1. 🔍 Live Dynamic Search for ANY City & Station
