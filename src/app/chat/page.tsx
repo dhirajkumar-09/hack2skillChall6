@@ -154,6 +154,12 @@ export default function ChatPage() {
           </h1>
         </div>
         <div className="text-right text-[11px] text-slate-400">
+          <div className="flex items-center justify-end gap-1 mb-0.5">
+            <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-2 py-0.5 rounded-full flex items-center gap-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              ✨ Gemini 3.5 Flash Active
+            </span>
+          </div>
           <span>Grounded on: </span>
           <strong className="text-cyan-300 font-mono">AQI {aqiData.aqi}</strong>
         </div>

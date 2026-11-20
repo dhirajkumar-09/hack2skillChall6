@@ -189,8 +189,16 @@ export function AqiGauge({ data, language = 'en', onOpenLocationSelector }: AqiG
         </div>
 
         <div className="text-right">
-          <span className="text-xs text-slate-400 block line-clamp-1 max-w-[140px]">{data.source}</span>
-          {isTimeTraveling ? (
+          <div className="flex items-center justify-end gap-1.5">
+            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-[10px] font-semibold text-emerald-400">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span>✨ Gemini AI Active</span>
+            </span>
+          </div>
+          <span className="text-[11px] text-slate-400 block mt-0.5 truncate max-w-[160px]">
+            {data.source || "Open-Meteo Air Quality API"}
+          </span>
+          {isTimeTraveling && (
             <button
               onClick={() => setSelectedHourIndex(null)}
               className="text-[11px] text-cyan-400 hover:text-cyan-300 font-semibold flex items-center gap-1 ml-auto mt-0.5"
@@ -198,11 +206,6 @@ export function AqiGauge({ data, language = 'en', onOpenLocationSelector }: AqiG
               <RotateCcw className="w-3 h-3" />
               {isHi ? "लाइव पर लौटें" : "Reset to Live"}
             </button>
-          ) : (
-            <span className="text-[11px] text-emerald-400 font-mono flex items-center justify-end gap-1 mt-0.5">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-              Live Synced
-            </span>
           )}
         </div>
       </div>
@@ -270,36 +273,41 @@ export function AqiGauge({ data, language = 'en', onOpenLocationSelector }: AqiG
       </div>
 
       {/* Visual Semi-Circle Gauge */}
-      <div className="flex flex-col items-center justify-center my-1">
-        <div className="relative w-56 h-28 flex items-end justify-center overflow-hidden">
-          {/* Gauge background arc */}
-          <div className="w-56 h-56 rounded-full border-[14px] border-slate-800 absolute top-0" />
-          
-          {/* Colored segmented arc */}
-          <svg className="w-56 h-56 absolute top-0 -rotate-90" viewBox="0 0 100 100">
-            <circle
-              cx="50"
-              cy="50"
-              r="40"
-              fill="transparent"
-              stroke={theme.color}
-              strokeWidth="10"
-              strokeDasharray="251.2"
-              strokeDashoffset={251.2 - (251.2 * (clampedAqi / 500) * 0.5)}
+      <div className="flex flex-col items-center justify-center my-2">
+        <div className="relative w-64 sm:w-72 flex flex-col items-center justify-center">
+          <svg className="w-full h-auto overflow-visible" viewBox="0 0 240 135">
+            {/* Background Arch Track */}
+            <path
+              d="M 28 120 A 92 92 0 0 1 212 120"
+              fill="none"
+              stroke="#1e293b"
+              strokeWidth="14"
               strokeLinecap="round"
+            />
+            {/* Colored Active Progress Arc */}
+            <path
+              d="M 28 120 A 92 92 0 0 1 212 120"
+              fill="none"
+              stroke={theme.color}
+              strokeWidth="14"
+              strokeLinecap="round"
+              strokeDasharray={289.03}
+              strokeDashoffset={289.03 * (1 - Math.min(1, Math.max(0, clampedAqi / 500)))}
               className="transition-all duration-700 ease-out"
             />
-          </svg>
+            {/* Gauge End Labels */}
+            <text x="28" y="133" textAnchor="middle" fill="#64748b" fontSize="9" fontWeight="600">0</text>
+            <text x="120" y="22" textAnchor="middle" fill="#64748b" fontSize="9" fontWeight="600">250</text>
+            <text x="212" y="133" textAnchor="middle" fill="#64748b" fontSize="9" fontWeight="600">500+</text>
 
-          {/* AQI Big Number Display */}
-          <div className="relative z-10 text-center mb-1">
-            <span className="text-4xl font-extrabold tracking-tight text-white font-mono">
+            {/* AQI Big Number Display inside SVG for perfect centering */}
+            <text x="120" y="90" textAnchor="middle" fill="#ffffff" fontSize="38" fontWeight="800" fontFamily="monospace">
               {displayAqi}
-            </span>
-            <span className="text-xs font-semibold text-slate-400 block -mt-1">
+            </text>
+            <text x="120" y="110" textAnchor="middle" fill="#94a3b8" fontSize="10.5" fontWeight="600">
               {aqiStandard === "epa" ? "US EPA Scale" : "CPCB India Scale"} · {displayHourLabel}
-            </span>
-          </div>
+            </text>
+          </svg>
         </div>
 
         <p className="text-xs text-slate-300 text-center max-w-sm mt-3 px-2">

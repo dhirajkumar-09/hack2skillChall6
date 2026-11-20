@@ -100,10 +100,16 @@ export default function PlanPage() {
         <>
           {/* Plan Headline & General Advice Card */}
           <div className="bg-gradient-to-r from-slate-900 via-surface-card to-slate-900 border border-cyan-800/40 rounded-2xl p-5 shadow-xl">
-            <div className="flex items-center gap-2 mb-2">
-              <Sparkles className="w-4 h-4 text-cyan-400" />
-              <span className="text-xs font-semibold text-cyan-300 font-mono">
-                {plan.date} · AQI {aqiData.aqi}
+            <div className="flex items-center justify-between gap-2 mb-2">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-cyan-400" />
+                <span className="text-xs font-semibold text-cyan-300 font-mono">
+                  {plan.date} · AQI {aqiData.aqi}
+                </span>
+              </div>
+              <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-800/60 px-2 py-0.5 rounded-full flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                ✨ Gemini GenAI Active
               </span>
             </div>
             <h2 className="text-base font-bold text-white mb-2 leading-snug">

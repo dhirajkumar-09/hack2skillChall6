@@ -99,8 +99,17 @@ export function NavBar() {
             })}
           </nav>
 
-          {/* Actions: Live AQI pill, Language toggle, Refresh */}
+          {/* Actions: Live AQI pill, Gemini AI Badge, Language toggle, Refresh */}
           <div className="flex items-center gap-2">
+            {/* Gemini AI Status Badge */}
+            <div 
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border border-cyan-500/30 bg-cyan-950/40 text-cyan-300"
+              title="Google Gemini AI Engine Active: Powering AI Plans, Chat & CAAQMS Grounding"
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+              <span className="text-[11px] font-semibold">✨ Gemini AI</span>
+            </div>
+
             {/* Live AQI badge */}
             <div className={`px-2.5 py-1 rounded-full text-xs font-semibold border flex items-center gap-1.5 ${getAqiPillColor(aqiData.category)}`}>
               <span className="w-2 h-2 rounded-full animate-pulse bg-current" />
