@@ -14,7 +14,7 @@
 
 ## 🚀 Live Demo & Deployment
 
-- **Production URL:** [https://hack2skillchallenge6.vercel.app/](https://hack2skillchallenge6.vercel.app/)
+- **Production URL:** [https://hack2skillchallengee6.vercel.app/](https://hack2skillchallengee6.vercel.app/)
 - **GitHub Repository:** [https://github.com/dhirajkumar-09/hack2skillChall6](https://github.com/dhirajkumar-09/hack2skillChall6)
 
 > **Deployment Note:** SmogShield is configured with zero-dependency fallback datasets so it runs **100% functional out-of-the-box without requiring any mandatory API keys or credit cards**. To connect live Gemini generative models, simply set `GEMINI_API_KEY` in Vercel Project Settings or your local `.env.local`.
