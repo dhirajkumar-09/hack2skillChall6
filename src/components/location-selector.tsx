@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useApp } from "@/context/app-context";
 import { MapPin, Navigation, Check, X, Search, Globe, Loader2, Sparkles, Building2 } from "lucide-react";
+import { logger } from "@/lib/logger";
 
 export const POPULAR_CITIES = [
   { name: "Patna (Boring Road)", lat: 25.5941, lon: 85.1376, tag: "Bihar · High Particulate" },
@@ -73,7 +74,7 @@ export function LocationSelector({ isOpen, onClose }: LocationSelectorProps) {
           }
         }
       } catch (e) {
-        console.warn("Geocoding fetch error:", e);
+        logger.warn("Geocoding fetch error:", e);
       } finally {
         setIsSearching(false);
       }
@@ -255,7 +256,7 @@ export function LocationSelector({ isOpen, onClose }: LocationSelectorProps) {
 
           {search.trim().length >= 2 && !isSearching && searchResults.length === 0 && (
             <p className="text-[11px] text-amber-300 px-1">
-              No direct geocoding match for "{search}". You can select from popular stations below or enter custom coordinates.
+              No direct geocoding match for &quot;{search}&quot;. You can select from popular stations below or enter custom coordinates.
             </p>
           )}
         </div>

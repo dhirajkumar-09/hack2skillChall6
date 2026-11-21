@@ -25,6 +25,7 @@ import {
   Building2,
   Loader2
 } from "lucide-react";
+import { logger } from "@/lib/logger";
 
 interface AqiGaugeProps {
   data: AQIData;
@@ -54,7 +55,7 @@ export function AqiGauge({ data, language = 'en', onOpenLocationSelector }: AqiG
         setStationData(json);
       }
     } catch (e) {
-      console.warn("Station lookup error:", e);
+      logger.warn("Station lookup error:", e);
     } finally {
       setStationLoading(false);
     }
@@ -550,7 +551,7 @@ export function AqiGauge({ data, language = 'en', onOpenLocationSelector }: AqiG
                   Most mobile weather apps (Xiaomi, Vivo, Oppo, Apple) use the <strong>US EPA Global AQI index</strong> or directly show the <strong>PM2.5 concentration (182 µg/m³)</strong> as the AQI score.
                 </p>
                 <p className="font-mono text-cyan-300">
-                  PM2.5 = 182 µg/m³ ➔ EPA AQI = 182 - 232 ("Very Unhealthy")
+                  PM2.5 = 182 µg/m³ ➔ EPA AQI = 182 - 232 (&quot;Very Unhealthy&quot;)
                 </p>
               </div>
 
@@ -559,12 +560,12 @@ export function AqiGauge({ data, language = 'en', onOpenLocationSelector }: AqiG
                   <span>🇮🇳 Central Pollution Control Board (CPCB India NAQI)</span>
                 </div>
                 <p>
-                  India's official National AQI scale uses strict linear interpolation across 6 health bands. For PM2.5 between 121 and 250 µg/m³:
+                  India&apos;s official National AQI scale uses strict linear interpolation across 6 health bands. For PM2.5 between 121 and 250 µg/m³:
                 </p>
                 <p className="font-mono text-emerald-300 bg-slate-950 p-2 rounded">
                   AQI = 301 + [(400 - 301) / (250 - 120)] × (PM2.5 - 120)<br />
                   For PM2.5 = 165 µg/m³ ➔ AQI = 335<br />
-                  For PM2.5 = 182 µg/m³ ➔ AQI = 348 ("Very Poor")
+                  For PM2.5 = 182 µg/m³ ➔ AQI = 348 (&quot;Very Poor&quot;)
                 </p>
               </div>
 

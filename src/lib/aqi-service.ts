@@ -1,4 +1,5 @@
 import { AQICategory, AQIData, HourlyForecastItem, AQIStandard } from "@/types";
+import { logger } from "./logger";
 
 /**
  * Calculate both India CPCB and US EPA / AccuWeather AQI from PM2.5
@@ -469,7 +470,7 @@ export async function fetchLiveAQI(lat: number, lon: number): Promise<AQIData> {
       isFallback: false
     };
   } catch (err) {
-    console.warn("AQI fetch failed or timed out, using fallback dataset:", err);
+    logger.warn("AQI fetch failed or timed out, using fallback dataset:", err);
     return {
       ...FALLBACK_AQI_DATA,
       timestamp: new Date().toISOString(),

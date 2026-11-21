@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 import { UserProfile, AQIData, AppLanguage, PlanActionBlock, AQIStandard } from "@/types";
 import { DEFAULT_USER_PROFILE, DEMO_PERSONAS } from "@/lib/personas";
 import { FALLBACK_AQI_DATA, fetchLiveAQI, calibrateAQIData } from "@/lib/aqi-service";
+import { logger } from "@/lib/logger";
 
 interface AppContextType {
   profile: UserProfile;
@@ -98,11 +99,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         setLanguageState(savedLang);
       }
     } catch (e) {
-      console.warn("Storage init note:", e);
+      logger.warn("Storage init note:", e);
     }
 
     // Initial AQI fetch with initial parameters
     refreshAQI(initialLat, initialLon, initialStd, initialManualPm);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const refreshAQI = async (
@@ -123,7 +125,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         fetched = await res.json();
       }
     } catch (e) {
-      console.warn("Server API fetch error, fallback to direct fetch:", e);
+      logger.warn("Server API fetch error, fallback to direct fetch:", e);
     }
 
     if (!fetched) {

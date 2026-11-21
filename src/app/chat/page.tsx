@@ -15,6 +15,7 @@ import {
   AlertTriangle 
 } from "lucide-react";
 import { getTranslation } from "@/lib/i18n";
+import { logger } from "@/lib/logger";
 
 interface SpeechRecognitionEvent {
   results: {
@@ -124,7 +125,7 @@ export default function ChatPage() {
         setMessages(prev => [...prev, botMsg]);
       }
     } catch (e) {
-      console.warn("Chat API call error:", e);
+      logger.warn("Chat API call error:", e);
     } finally {
       setLoading(false);
     }

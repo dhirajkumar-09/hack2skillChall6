@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useApp } from "@/context/app-context";
 import { DailyCleanAirPlan, PlanActionBlock } from "@/types";
 import { 
@@ -17,6 +17,7 @@ import {
   BookOpen
 } from "lucide-react";
 import { getTranslation } from "@/lib/i18n";
+import { logger } from "@/lib/logger";
 
 export default function PlanPage() {
   const { profile, aqiData, language, completedActions, toggleActionCompleted, geminiApiKey } = useApp();
@@ -25,7 +26,7 @@ export default function PlanPage() {
   const t = getTranslation(language);
   const isHi = language === "hi";
 
-  const fetchPlan = async () => {
+  const fetchPlan = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch("/api/plan", {
@@ -38,15 +39,15 @@ export default function PlanPage() {
         setPlan(data);
       }
     } catch (e) {
-      console.warn("Failed to load plan API:", e);
+      logger.warn("Failed to load plan API:", e);
     } finally {
       setLoading(false);
     }
-  };
+  }, [profile, aqiData, language, geminiApiKey]);
 
   useEffect(() => {
     fetchPlan();
-  }, [profile.id, aqiData.aqi, language, geminiApiKey]);
+  }, [fetchPlan]);
 
   const getPeriodBadgeColor = (period: string) => {
     switch (period) {

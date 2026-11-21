@@ -1,5 +1,6 @@
 import { DailyCleanAirPlan, UserProfile, AQIData, ChatMessage } from "@/types";
 import { queryKnowledgeBase, KnowledgeChunk } from "./rag-store";
+import { logger } from "./logger";
 
 export interface LLMProviderConfig {
   apiKey?: string;
@@ -22,7 +23,7 @@ export async function generateDailyPlan(
       const plan = await callGeminiPlan(apiKey, profile, aqiData, language);
       if (plan) return plan;
     } catch (err) {
-      console.warn("Gemini API call failed, falling back to deterministic generator:", err);
+      logger.warn("Gemini API call failed, falling back to deterministic generator:", err);
     }
   }
 
@@ -50,7 +51,7 @@ export async function generateChatResponse(
       const response = await callGeminiChat(apiKey, userQuery, history, profile, aqiData, retrievedChunks, language);
       if (response) return response;
     } catch (err) {
-      console.warn("Gemini Chat call failed, falling back to grounded rule engine:", err);
+      logger.warn("Gemini Chat call failed, falling back to grounded rule engine:", err);
     }
   }
 
